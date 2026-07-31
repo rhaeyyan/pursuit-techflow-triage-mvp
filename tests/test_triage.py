@@ -323,3 +323,65 @@ def test_parse_csv_flexible_headers():
     assert tickets_2[0].channel == "Web"
     assert tickets_2[0].created_at == "2026-07-30T15:00:00"
 
+
+# ---------------------------------------------------------------------------
+# 6. Cloud LLM Provider Fallback Tests
+# ---------------------------------------------------------------------------
+
+def test_cloud_llm_provider_fallback(monkeypatch):
+    """Test triage service supports cloud LLM providers (Groq / Gemini) via env vars."""
+    ticket = TicketInput(
+        ticket_id="TICK-CLOUD-001",
+        subject="Cloud integration inquiry",
+        body="Asking about API rate limits for cloud setup.",
+    )
+
+    # 1. Test Groq cloud provider via LLM_PROVIDER="groq" and GROQ_API_KEY
+    monkeypatch.setenv("LLM_PROVIDER", "groq")
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test_groq_key_12345")
+
+    mock_groq_response = MagicMock()
+    mock_groq_response.status_code = 200
+    mock_groq_response.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "content": '{"issue_type": "technical", "urgency": "medium"}'
+                }
+            }
+        ]
+    }
+
+    with patch("httpx.post", return_value=mock_groq_response) as mock_post:
+        triaged = triage_tickets([ticket])[0]
+        assert triaged.issue_type == "technical"
+        assert triaged.urgency == "medium"
+        assert triaged.confidence_source == "llm"
+        assert mock_post.called
+
+    # 2. Test Gemini cloud provider via LLM_PROVIDER="gemini" and GEMINI_API_KEY
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "AIzaSy_test_gemini_key_67890")
+
+    mock_gemini_response = MagicMock()
+    mock_gemini_response.status_code = 200
+    mock_gemini_response.json.return_value = {
+        "candidates": [
+            {
+                "content": {
+                    "parts": [
+                        {"text": '{"issue_type": "billing", "urgency": "high"}'}
+                    ]
+                }
+            }
+        ]
+    }
+
+    with patch("httpx.post", return_value=mock_gemini_response) as mock_post:
+        triaged_gemini = triage_tickets([ticket])[0]
+        assert triaged_gemini.issue_type == "billing"
+        assert triaged_gemini.urgency == "high"
+        assert triaged_gemini.confidence_source == "llm"
+        assert mock_post.called
+
+

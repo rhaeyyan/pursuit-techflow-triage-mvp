@@ -7,6 +7,8 @@ import { FilterBar } from './components/FilterBar';
 import { TicketTable } from './components/TicketTable';
 import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck } from 'lucide-react';
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+
 export const App: React.FC = () => {
   const [tickets, setTickets] = useState<TriagedTicket[]>(DEMO_TICKETS);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -23,7 +25,7 @@ export const App: React.FC = () => {
 
   // Health check backend status on mount
   useEffect(() => {
-    fetch('/api/health')
+    fetch(`${API_BASE_URL}/api/health`)
       .then((res) => {
         if (res.ok) {
           setBackendStatus('online');
@@ -47,7 +49,7 @@ export const App: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/tickets/triage', {
+      const response = await fetch(`${API_BASE_URL}/api/tickets/triage`, {
         method: 'POST',
         body: formData,
       });

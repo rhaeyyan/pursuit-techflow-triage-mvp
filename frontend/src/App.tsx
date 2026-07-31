@@ -5,16 +5,23 @@ import { UploadCard } from './components/UploadCard';
 import { StatSummary } from './components/StatSummary';
 import { FilterBar } from './components/FilterBar';
 import { TicketTable } from './components/TicketTable';
-import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck, Sun, Moon, Github, Globe, Linkedin } from 'lucide-react';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
 
+function getInitialTheme(): 'light' | 'dark' {
+  const stored = localStorage.getItem('techflow-theme');
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 export const App: React.FC = () => {
-  const [tickets, setTickets] = useState<TriagedTicket[]>(DEMO_TICKETS);
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
+  const [tickets, setTickets] = useState<TriagedTicket[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [selectedFileName, setSelectedFileName] = useState<string | null>('Demo Dataset (Kaggle Support Tickets)');
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>('Loaded 10 demo tickets successfully');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   const [filters, setFilters] = useState<FilterState>({
@@ -25,7 +32,7 @@ export const App: React.FC = () => {
 
   // Health check backend status on mount
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/health`)
+    fetch(`${API_BASE_URL}/health`)
       .then((res) => {
         if (res.ok) {
           setBackendStatus('online');
@@ -37,6 +44,16 @@ export const App: React.FC = () => {
         setBackendStatus('offline');
       });
   }, []);
+
+  // Update theme data attribute on <html> element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('techflow-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
 
   // Handle CSV File Upload to Backend Endpoint (/api/tickets/triage)
   const handleFileUpload = async (file: File) => {
@@ -61,11 +78,11 @@ export const App: React.FC = () => {
 
       const data: TriageResponse = await response.json();
       setTickets(data.tickets);
-      setSuccessMessage(`Successfully processed and triaged ${data.total_tickets} tickets from ${file.name}`);
+      setSuccessMessage(`Successfully triaged ${data.total_tickets} tickets from ${file.name}`);
       setBackendStatus('online');
     } catch (err: any) {
-      console.warn('Backend API triage error, offering demo dataset fallback:', err);
-      setErrorMessage(`Backend processing error: ${err.message || 'Failed to connect to API server'}. Using fallback demo dataset mode.`);
+      console.warn('Backend API triage error:', err);
+      setErrorMessage(`Upload failed: ${err.message || 'Could not connect to API server'}. Try loading the demo dataset instead.`);
       setBackendStatus('offline');
     } finally {
       setIsUploading(false);
@@ -80,38 +97,46 @@ export const App: React.FC = () => {
     setSuccessMessage('Loaded benchmark Kaggle support tickets dataset (10 tickets)');
   };
 
+  // Handler to clear loaded queue tickets
+  const handleClearQueue = () => {
+    setTickets([]);
+    setSelectedFileName(null);
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    setFilters({
+      urgencyFilter: 'all',
+      categoryFilter: 'all',
+      searchQuery: '',
+    });
+  };
+
   // Client-side multi-criteria filtering & search
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
-      // Urgency Filter
       if (filters.urgencyFilter !== 'all' && ticket.urgency.toLowerCase() !== filters.urgencyFilter) {
         return false;
       }
-
-      // Category Filter
       if (
         filters.categoryFilter !== 'all' &&
         ticket.issue_type.toLowerCase() !== filters.categoryFilter.toLowerCase()
       ) {
         return false;
       }
-
-      // Multi-field Text Search Query
       if (filters.searchQuery.trim() !== '') {
         const query = filters.searchQuery.toLowerCase().trim();
         const subjectMatch = ticket.subject.toLowerCase().includes(query);
         const bodyMatch = ticket.body.toLowerCase().includes(query);
         const idMatch = ticket.ticket_id.toLowerCase().includes(query);
         const customerMatch = ticket.customer_id?.toLowerCase().includes(query) ?? false;
-
         if (!subjectMatch && !bodyMatch && !idMatch && !customerMatch) {
           return false;
         }
       }
-
       return true;
     });
   }, [tickets, filters]);
+
+  const hasTickets = tickets.length > 0;
 
   return (
     <div className="app-container">
@@ -123,7 +148,7 @@ export const App: React.FC = () => {
           alignItems: 'center',
           marginBottom: '32px',
           paddingBottom: '20px',
-          borderBottom: '1px solid var(--border-glass)',
+          borderBottom: '1px solid var(--border-primary)',
           flexWrap: 'wrap',
           gap: '16px',
         }}
@@ -131,80 +156,128 @@ export const App: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div
             style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #0284c7 0%, #8b5cf6 100%)',
+              width: '42px',
+              height: '42px',
+              borderRadius: 'var(--radius-md)',
+              background: theme === 'dark'
+                ? 'linear-gradient(135deg, #0284c7 0%, #8b5cf6 100%)'
+                : 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(56, 189, 248, 0.4)',
+              boxShadow: theme === 'dark' ? '0 0 16px rgba(56, 189, 248, 0.3)' : '0 2px 8px rgba(59, 130, 246, 0.25)',
             }}
           >
-            <Zap size={24} style={{ color: '#ffffff' }} />
+            <Zap size={22} style={{ color: '#ffffff' }} />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: 800,
+                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
               TechFlow <span className="gradient-text">Support Queue</span>
             </h1>
-            <p className="subtext">AI-Driven Automated Ticket Classification & Urgency Prioritization Engine</p>
+            <p className="subtext" style={{ marginTop: '2px' }}>
+              Automated Ticket Classification & Urgency Prioritization
+            </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span
-            className="badge"
-            style={{
-              background:
-                backendStatus === 'online'
-                  ? 'rgba(16, 185, 129, 0.15)'
-                  : backendStatus === 'offline'
-                  ? 'rgba(245, 158, 11, 0.15)'
-                  : 'rgba(148, 163, 184, 0.15)',
-              color:
-                backendStatus === 'online'
-                  ? '#34d399'
-                  : backendStatus === 'offline'
-                  ? '#fbbf24'
-                  : '#94a3b8',
-              border: `1px solid ${
-                backendStatus === 'online'
-                  ? 'rgba(16, 185, 129, 0.35)'
-                  : backendStatus === 'offline'
-                  ? 'rgba(245, 158, 11, 0.35)'
-                  : 'rgba(148, 163, 184, 0.35)'
-              }`,
-              padding: '6px 12px',
-            }}
+          {/* Theme Toggle */}
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           >
-            {backendStatus === 'online' ? (
-              <>
-                <ShieldCheck size={14} /> FastAPI Triage Engine Connected
-              </>
-            ) : backendStatus === 'offline' ? (
-              <>
-                <AlertTriangle size={14} /> Standalone Client Mode (Demo Active)
-              </>
-            ) : (
-              <>
-                <RefreshCw size={14} className="animate-spin" /> Connecting API...
-              </>
-            )}
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+
+          {/* Backend Status Badge with Tooltip */}
+          <span className="tooltip-wrapper tooltip-bottom">
+            <span
+              className="badge"
+              style={{
+                background:
+                  backendStatus === 'online'
+                    ? 'var(--status-online-bg)'
+                    : backendStatus === 'offline'
+                    ? 'var(--status-offline-bg)'
+                    : 'var(--status-checking-bg)',
+                color:
+                  backendStatus === 'online'
+                    ? 'var(--status-online-text)'
+                    : backendStatus === 'offline'
+                    ? 'var(--status-offline-text)'
+                    : 'var(--status-checking-text)',
+                border: `1px solid ${
+                  backendStatus === 'online'
+                    ? 'var(--status-online-border)'
+                    : backendStatus === 'offline'
+                    ? 'var(--status-offline-border)'
+                    : 'var(--status-checking-border)'
+                }`,
+                padding: '6px 14px',
+                fontSize: '0.775rem',
+                cursor: 'help',
+              }}
+            >
+              {backendStatus === 'online' ? (
+                <>
+                  <ShieldCheck size={14} /> API Connected
+                </>
+              ) : backendStatus === 'offline' ? (
+                <>
+                  <AlertTriangle size={14} /> Standalone Mode
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={14} className="animate-spin" /> Connecting…
+                </>
+              )}
+            </span>
+
+            <span className="tooltip-content" style={{ width: '280px', right: 0, left: 'auto', transform: 'none' }}>
+              {backendStatus === 'online' ? (
+                <>
+                  <strong>FastAPI Backend API Connected</strong><br />
+                  Connected to <code>{API_BASE_URL}</code>. Powering automated CSV ingestion, keyword/pattern rule engine classification, and LLM triage fallback.
+                </>
+              ) : backendStatus === 'offline' ? (
+                <>
+                  <strong>Standalone Demo Mode</strong><br />
+                  Backend API at <code>{API_BASE_URL}</code> is offline. Running in client mode. Launch <code>uvicorn main:app</code> to connect backend triage services.
+                </>
+              ) : (
+                <>
+                  <strong>Checking API Status…</strong><br />
+                  Verifying connection to <code>{API_BASE_URL}/health</code>.
+                </>
+              )}
+            </span>
           </span>
         </div>
       </header>
 
       {/* Error Toast Notification */}
       {errorMessage && (
-        <div className="toast-error">
+        <div className="toast-error fade-in">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <AlertTriangle size={20} />
+            <AlertTriangle size={18} />
             <span>{errorMessage}</span>
           </div>
           <button
             type="button"
             className="btn-secondary"
-            style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+            style={{ padding: '4px 10px', fontSize: '0.775rem' }}
             onClick={() => setErrorMessage(null)}
           >
             Dismiss
@@ -214,15 +287,15 @@ export const App: React.FC = () => {
 
       {/* Success Toast Notification */}
       {successMessage && !errorMessage && (
-        <div className="toast-success">
+        <div className="toast-success fade-in">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <CheckCircle2 size={20} />
+            <CheckCircle2 size={18} />
             <span>{successMessage}</span>
           </div>
           <button
             type="button"
             className="btn-secondary"
-            style={{ padding: '4px 10px', fontSize: '0.8rem', color: '#6ee7b7' }}
+            style={{ padding: '4px 10px', fontSize: '0.775rem' }}
             onClick={() => setSuccessMessage(null)}
           >
             Dismiss
@@ -234,36 +307,127 @@ export const App: React.FC = () => {
       <UploadCard
         onFileUpload={handleFileUpload}
         onLoadDemo={handleLoadDemo}
+        onClearQueue={handleClearQueue}
+        hasTickets={hasTickets}
         isUploading={isUploading}
         selectedFileName={selectedFileName}
       />
 
-      {/* Statistics Summary Banner */}
-      <StatSummary
-        tickets={tickets}
-        activeUrgencyFilter={filters.urgencyFilter}
-        onSelectUrgencyFilter={(urgency) => setFilters({ ...filters, urgencyFilter: urgency })}
-      />
+      {/* Only show triage results when tickets are loaded */}
+      {hasTickets && (
+        <>
+          {/* Statistics Summary Banner */}
+          <StatSummary
+            tickets={tickets}
+            activeUrgencyFilter={filters.urgencyFilter}
+            onSelectUrgencyFilter={(urgency) => setFilters({ ...filters, urgencyFilter: urgency })}
+          />
 
-      {/* Filter & Live Search Bar */}
-      <FilterBar
-        filters={filters}
-        onFilterChange={setFilters}
-        totalFilteredCount={filteredTickets.length}
-        totalUnfilteredCount={tickets.length}
-      />
+          {/* Filter & Live Search Bar */}
+          <FilterBar
+            filters={filters}
+            onFilterChange={setFilters}
+            totalFilteredCount={filteredTickets.length}
+            totalUnfilteredCount={tickets.length}
+          />
 
-      {/* Prioritized Ticket Table */}
-      <TicketTable
-        tickets={filteredTickets}
-        onResetFilters={() =>
-          setFilters({
-            urgencyFilter: 'all',
-            categoryFilter: 'all',
-            searchQuery: '',
-          })
-        }
-      />
+          {/* Prioritized Ticket Table */}
+          <TicketTable
+            tickets={filteredTickets}
+            onResetFilters={() =>
+              setFilters({
+                urgencyFilter: 'all',
+                categoryFilter: 'all',
+                searchQuery: '',
+              })
+            }
+          />
+        </>
+      )}
+
+      {/* Footer */}
+      <footer
+        style={{
+          marginTop: '48px',
+          paddingTop: '24px',
+          paddingBottom: '32px',
+          borderTop: '1px solid var(--border-primary)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+          color: 'var(--text-secondary)',
+          fontSize: '0.85rem',
+        }}
+      >
+        <div>
+          Built for <strong>Pursuit's AI-Native Fellowship (2026)</strong>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a
+            href="https://github.com/rhaeyyan/pursuit-techflow-triage-mvp"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--text-secondary)',
+              textDecoration: 'none',
+              fontWeight: 500,
+              transition: 'color 0.2s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+          >
+            <Github size={15} /> GitHub Repository
+          </a>
+
+          <span style={{ color: 'var(--text-muted)' }}>•</span>
+
+          <a
+            href="https://rayankhan.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--text-secondary)',
+              textDecoration: 'none',
+              fontWeight: 500,
+              transition: 'color 0.2s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+          >
+            <Globe size={15} /> rayankhan.io
+          </a>
+
+          <span style={{ color: 'var(--text-muted)' }}>•</span>
+
+          <a
+            href="https://www.linkedin.com/in/rayan-khan-3b90a2356/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--text-secondary)',
+              textDecoration: 'none',
+              fontWeight: 500,
+              transition: 'color 0.2s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+          >
+            <Linkedin size={15} /> LinkedIn
+          </a>
+        </div>
+      </footer>
     </div>
   );
 };

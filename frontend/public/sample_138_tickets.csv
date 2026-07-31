@@ -1,0 +1,139 @@
+ticket_id,subject,body,customer_id,channel,created_at
+TCK-5001,Cannot login to admin portal,Our entire team is locked out of the system. Getting 'Invalid SSO token' errors on every attempt.,CUST-10001,Community Forum,2026-07-28T05:28:20Z
+TCK-5002,Need more seats,We want to add 3 more seats to our plan. Does this prorate for the rest of the billing cycle?,CUST-10002,API / Monitoring Webhook,2026-07-29T05:53:18Z
+TCK-5003,Service severely degraded,"The dashboard is loading incredibly slowly, taking up to 30 seconds for a single page. It's heavily impacting our workflow.",CUST-10003,Slack Integration,2026-07-27T08:57:43Z
+TCK-5004,Missing data in export,"When I export the user list to CSV, the 'Company' column is completely blank for all 5000 records.",CUST-10004,Developer Portal,2026-07-25T05:49:51Z
+TCK-5005,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10005,Email,2026-07-26T10:46:36Z
+TCK-5006,Need more seats,We want to add 3 more seats to our plan. Does this prorate for the rest of the billing cycle?,CUST-10006,Security Desk,2026-07-28T20:37:04Z
+TCK-5007,Can't delete old project,"I have an old archived project that I want to completely delete, but the delete button is greyed out. I am an admin.",CUST-10007,Community Forum,2026-07-27T05:03:54Z
+TCK-5008,Typo in documentation,"Just a heads up, on the 'Getting Started' page, the word 'configuration' is spelled wrong.",CUST-10008,Phone,2026-07-27T13:35:56Z
+TCK-5009,Custom font not rendering,"We uploaded our corporate font for the customer portal, but it's defaulting to Arial on mobile devices.",CUST-10009,Web Portal,2026-07-30T23:28:27Z
+TCK-5010,Mobile app crashing on launch,"Since the update yesterday, the iOS app crashes immediately when I open it. I'm on iOS 16.",CUST-10010,Twitter/X DM,2026-07-26T17:20:03Z
+TCK-5011,General question about pricing,"If we switch to annual billing, do we still get the startup discount?",CUST-10011,In-App Chat,2026-07-26T17:16:13Z
+TCK-5012,Feedback on new layout,"I like the new sidebar navigation, but I preferred having the search bar in the top right.",CUST-10012,API / Monitoring Webhook,2026-07-25T09:50:16Z
+TCK-5013,Service severely degraded,"The dashboard is loading incredibly slowly, taking up to 30 seconds for a single page. It's heavily impacting our workflow.",CUST-10013,Community Forum,2026-07-28T16:29:27Z
+TCK-5014,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10014,Security Desk,2026-07-30T18:57:58Z
+TCK-5015,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10015,Phone,2026-07-25T05:39:38Z
+TCK-5016,Service severely degraded,"The dashboard is loading incredibly slowly, taking up to 30 seconds for a single page. It's heavily impacting our workflow.",CUST-10016,Security Desk,2026-07-29T10:45:36Z
+TCK-5017,Custom font not rendering,"We uploaded our corporate font for the customer portal, but it's defaulting to Arial on mobile devices.",CUST-10017,Developer Portal,2026-07-29T23:25:35Z
+TCK-5018,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10018,Developer Portal,2026-07-25T11:12:25Z
+TCK-5019,Need help configuring SLA alerts,"I want to set up an alert when a ticket is unassigned for 2 hours, but the UI is confusing. How do I do this?",CUST-10019,In-App Chat,2026-07-28T17:10:38Z
+TCK-5020,Service severely degraded,"The dashboard is loading incredibly slowly, taking up to 30 seconds for a single page. It's heavily impacting our workflow.",CUST-10020,Phone,2026-07-25T03:23:14Z
+TCK-5021,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10021,API / Monitoring Webhook,2026-07-27T03:20:08Z
+TCK-5022,Reports not generating,The end-of-month financial reports are stuck in 'Processing' state for over 6 hours now. We need these for tomorrow's board meeting.,CUST-10022,Phone,2026-07-29T01:12:11Z
+TCK-5023,Reports not generating,The end-of-month financial reports are stuck in 'Processing' state for over 6 hours now. We need these for tomorrow's board meeting.,CUST-10023,API / Monitoring Webhook,2026-07-26T08:11:08Z
+TCK-5024,Slack notification formatting,The messages sent to our Slack channel have broken markdown links. It makes them hard to read.,CUST-10024,Security Desk,2026-07-25T09:22:02Z
+TCK-5025,Slack notification formatting,The messages sent to our Slack channel have broken markdown links. It makes them hard to read.,CUST-10025,Developer Portal,2026-07-28T09:21:14Z
+TCK-5026,Dashboard graph displaying wrong timezone,"The traffic graph seems to be in UTC, but my account settings are set to PST. Can this be fixed?",CUST-10026,Phone,2026-07-28T20:41:03Z
+TCK-5027,What are the upcoming features?,Is there a public roadmap I can look at? Curious about what's coming in Q3.,CUST-10027,Security Desk,2026-07-29T18:35:46Z
+TCK-5028,Thanks for the great support,Just wanted to say thanks to Sarah for helping me yesterday. The issue is completely resolved now!,CUST-10028,Developer Portal,2026-07-26T19:37:21Z
+TCK-5029,Do you offer non-profit discounts?,We are a registered 501(c)(3) and would love to use your software. Do you have special pricing?,CUST-10029,Phone,2026-07-30T19:04:45Z
+TCK-5030,Can't delete old project,"I have an old archived project that I want to completely delete, but the delete button is greyed out. I am an admin.",CUST-10030,Web Portal,2026-07-27T01:07:56Z
+TCK-5031,Unable to update payment method,"Every time I try to add our new corporate card, it throws a generic error. Our old card expires tomorrow.",CUST-10031,Community Forum,2026-07-30T10:11:31Z
+TCK-5032,Dashboard graph displaying wrong timezone,"The traffic graph seems to be in UTC, but my account settings are set to PST. Can this be fixed?",CUST-10032,Email,2026-07-30T23:35:41Z
+TCK-5033,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10033,Slack Integration,2026-07-29T00:10:10Z
+TCK-5034,Requesting a demo for another team,Our marketing team is interested in using your tool. Can we schedule a quick 15 min demo for them next week?,CUST-10034,API / Monitoring Webhook,2026-07-26T05:59:49Z
+TCK-5035,Custom domain SSL expired,The SSL certificate for our custom domain just expired and the auto-renew didn't trigger. Visitors are getting security warnings.,CUST-10035,API / Monitoring Webhook,2026-07-26T03:04:17Z
+TCK-5036,Can't delete old project,"I have an old archived project that I want to completely delete, but the delete button is greyed out. I am an admin.",CUST-10036,API / Monitoring Webhook,2026-07-27T07:26:23Z
+TCK-5037,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10037,Twitter/X DM,2026-07-30T19:25:07Z
+TCK-5038,Where can I find the logo assets?,We want to include your logo on our partners page. Do you have a press kit available?,CUST-10038,In-App Chat,2026-07-25T06:06:47Z
+TCK-5039,Data leak in public dashboard,Private customer information is somehow showing up on the public facing dashboard. Take it down now!,CUST-10039,Web Portal,2026-07-28T01:46:14Z
+TCK-5040,Thanks for the great support,Just wanted to say thanks to Sarah for helping me yesterday. The issue is completely resolved now!,CUST-10040,Slack Integration,2026-07-27T02:47:41Z
+TCK-5041,Mobile app crashing on launch,"Since the update yesterday, the iOS app crashes immediately when I open it. I'm on iOS 16.",CUST-10041,In-App Chat,2026-07-29T05:52:51Z
+TCK-5042,Mobile app crashing on launch,"Since the update yesterday, the iOS app crashes immediately when I open it. I'm on iOS 16.",CUST-10042,Developer Portal,2026-07-25T21:00:23Z
+TCK-5043,Thanks for the great support,Just wanted to say thanks to Sarah for helping me yesterday. The issue is completely resolved now!,CUST-10043,Email,2026-07-27T14:07:35Z
+TCK-5044,Missing data in export,"When I export the user list to CSV, the 'Company' column is completely blank for all 5000 records.",CUST-10044,Twitter/X DM,2026-07-25T11:40:43Z
+TCK-5045,Plugin not loading on Firefox,"The browser extension works great on Chrome, but on Firefox it just shows a spinning loading icon indefinitely.",CUST-10045,Developer Portal,2026-07-25T03:01:47Z
+TCK-5046,Is there a community Slack?,I was wondering if you have a community Slack or Discord server for users to chat?,CUST-10046,Phone,2026-07-26T20:40:51Z
+TCK-5047,Need more seats,We want to add 3 more seats to our plan. Does this prorate for the rest of the billing cycle?,CUST-10047,Email,2026-07-30T01:14:45Z
+TCK-5048,Question about SOC2 compliance,We are doing an internal audit. Can you provide your latest SOC2 Type 2 report? No rush.,CUST-10048,Phone,2026-07-30T03:18:27Z
+TCK-5049,Feedback on new layout,"I like the new sidebar navigation, but I preferred having the search bar in the top right.",CUST-10049,Community Forum,2026-07-27T13:26:36Z
+TCK-5050,SSO authentication failing for new users,We just onboarded 5 new employees and none of them can login via Okta SSO. Existing users are fine.,CUST-10050,Developer Portal,2026-07-28T04:45:14Z
+TCK-5051,Integration token expired prematurely,Our OAuth token for the Salesforce integration expired after 2 days instead of 30. We have to keep re-authenticating.,CUST-10051,Slack Integration,2026-07-27T02:23:45Z
+TCK-5052,Custom font not rendering,"We uploaded our corporate font for the customer portal, but it's defaulting to Arial on mobile devices.",CUST-10052,API / Monitoring Webhook,2026-07-30T07:43:32Z
+TCK-5053,Bug in date picker,"When selecting a date range in the analytics tab, the end date always jumps back by one day. It's annoying to work around.",CUST-10053,Twitter/X DM,2026-07-27T07:43:03Z
+TCK-5054,Need more seats,We want to add 3 more seats to our plan. Does this prorate for the rest of the billing cycle?,CUST-10054,Web Portal,2026-07-26T02:26:27Z
+TCK-5055,Thanks for the great support,Just wanted to say thanks to Sarah for helping me yesterday. The issue is completely resolved now!,CUST-10055,Community Forum,2026-07-27T07:23:33Z
+TCK-5056,Typo in documentation,"Just a heads up, on the 'Getting Started' page, the word 'configuration' is spelled wrong.",CUST-10056,Community Forum,2026-07-27T13:54:14Z
+TCK-5057,Dashboard graph displaying wrong timezone,"The traffic graph seems to be in UTC, but my account settings are set to PST. Can this be fixed?",CUST-10057,Community Forum,2026-07-27T05:38:36Z
+TCK-5058,Plugin not loading on Firefox,"The browser extension works great on Chrome, but on Firefox it just shows a spinning loading icon indefinitely.",CUST-10058,Security Desk,2026-07-25T11:54:56Z
+TCK-5059,Question about API rate limits,Can you clarify if the 1000 req/min limit is per IP or per API key? The documentation is a bit vague.,CUST-10059,Phone,2026-07-30T10:54:41Z
+TCK-5060,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10060,Slack Integration,2026-07-27T07:27:50Z
+TCK-5061,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10061,Email,2026-07-27T02:08:05Z
+TCK-5062,Integration token expired prematurely,Our OAuth token for the Salesforce integration expired after 2 days instead of 30. We have to keep re-authenticating.,CUST-10062,Email,2026-07-28T18:38:24Z
+TCK-5063,Account suspended incorrectly,"Our account was suddenly suspended for 'TOS violation' but we didn't do anything. We have a campaign running, please unblock us!",CUST-10063,Email,2026-07-28T01:31:19Z
+TCK-5064,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10064,Community Forum,2026-07-26T08:56:46Z
+TCK-5065,Can't delete old project,"I have an old archived project that I want to completely delete, but the delete button is greyed out. I am an admin.",CUST-10065,In-App Chat,2026-07-25T02:57:08Z
+TCK-5066,Missing data in export,"When I export the user list to CSV, the 'Company' column is completely blank for all 5000 records.",CUST-10066,Security Desk,2026-07-26T13:07:11Z
+TCK-5067,Major security breach suspected,We noticed unauthorized access from unknown IP addresses in our admin logs. Need immediate assistance to lock down our account and audit logs.,CUST-10067,API / Monitoring Webhook,2026-07-26T23:00:56Z
+TCK-5068,Cannot login to admin portal,Our entire team is locked out of the system. Getting 'Invalid SSO token' errors on every attempt.,CUST-10068,Web Portal,2026-07-28T08:21:49Z
+TCK-5069,Invoice shows incorrect tier,"Our latest invoice shows us on the Enterprise tier, but we downgraded to Pro last week. Please fix before charging.",CUST-10069,Twitter/X DM,2026-07-27T17:33:41Z
+TCK-5070,How do I change my avatar?,I can't seem to find the option to upload a profile picture. Where is it located?,CUST-10070,Phone,2026-07-25T08:08:27Z
+TCK-5071,Can't delete old project,"I have an old archived project that I want to completely delete, but the delete button is greyed out. I am an admin.",CUST-10071,Web Portal,2026-07-28T02:50:08Z
+TCK-5072,Do you offer non-profit discounts?,We are a registered 501(c)(3) and would love to use your software. Do you have special pricing?,CUST-10072,API / Monitoring Webhook,2026-07-28T04:45:42Z
+TCK-5073,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10073,Web Portal,2026-07-28T05:40:10Z
+TCK-5074,SSO authentication failing for new users,We just onboarded 5 new employees and none of them can login via Okta SSO. Existing users are fine.,CUST-10074,Community Forum,2026-07-26T19:47:33Z
+TCK-5075,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10075,Developer Portal,2026-07-25T07:44:06Z
+TCK-5076,Typo in documentation,"Just a heads up, on the 'Getting Started' page, the word 'configuration' is spelled wrong.",CUST-10076,In-App Chat,2026-07-30T05:56:29Z
+TCK-5077,SSO authentication failing for new users,We just onboarded 5 new employees and none of them can login via Okta SSO. Existing users are fine.,CUST-10077,In-App Chat,2026-07-27T22:42:36Z
+TCK-5078,Question about SOC2 compliance,We are doing an internal audit. Can you provide your latest SOC2 Type 2 report? No rush.,CUST-10078,API / Monitoring Webhook,2026-07-29T16:28:46Z
+TCK-5079,Unable to update payment method,"Every time I try to add our new corporate card, it throws a generic error. Our old card expires tomorrow.",CUST-10079,Security Desk,2026-07-25T16:34:24Z
+TCK-5080,Thanks for the great support,Just wanted to say thanks to Sarah for helping me yesterday. The issue is completely resolved now!,CUST-10080,Phone,2026-07-30T03:29:46Z
+TCK-5081,Where can I find the logo assets?,We want to include your logo on our partners page. Do you have a press kit available?,CUST-10081,Security Desk,2026-07-26T00:46:48Z
+TCK-5082,Slack notification formatting,The messages sent to our Slack channel have broken markdown links. It makes them hard to read.,CUST-10082,Email,2026-07-29T15:36:37Z
+TCK-5083,Slack notification formatting,The messages sent to our Slack channel have broken markdown links. It makes them hard to read.,CUST-10083,Twitter/X DM,2026-07-27T12:27:51Z
+TCK-5084,Where can I find the logo assets?,We want to include your logo on our partners page. Do you have a press kit available?,CUST-10084,In-App Chat,2026-07-28T14:14:27Z
+TCK-5085,How do I change my avatar?,I can't seem to find the option to upload a profile picture. Where is it located?,CUST-10085,Phone,2026-07-25T11:01:02Z
+TCK-5086,Major security breach suspected,We noticed unauthorized access from unknown IP addresses in our admin logs. Need immediate assistance to lock down our account and audit logs.,CUST-10086,Email,2026-07-30T03:48:42Z
+TCK-5087,Dashboard graph displaying wrong timezone,"The traffic graph seems to be in UTC, but my account settings are set to PST. Can this be fixed?",CUST-10087,Twitter/X DM,2026-07-25T21:19:46Z
+TCK-5088,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10088,Twitter/X DM,2026-07-27T13:39:51Z
+TCK-5089,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10089,Phone,2026-07-25T20:59:58Z
+TCK-5090,Reports not generating,The end-of-month financial reports are stuck in 'Processing' state for over 6 hours now. We need these for tomorrow's board meeting.,CUST-10090,In-App Chat,2026-07-26T06:10:24Z
+TCK-5091,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10091,Twitter/X DM,2026-07-29T09:37:52Z
+TCK-5092,Bug in date picker,"When selecting a date range in the analytics tab, the end date always jumps back by one day. It's annoying to work around.",CUST-10092,Web Portal,2026-07-25T15:24:49Z
+TCK-5093,Mobile app crashing on launch,"Since the update yesterday, the iOS app crashes immediately when I open it. I'm on iOS 16.",CUST-10093,Slack Integration,2026-07-27T15:03:39Z
+TCK-5094,Question about API rate limits,Can you clarify if the 1000 req/min limit is per IP or per API key? The documentation is a bit vague.,CUST-10094,Slack Integration,2026-07-29T22:28:12Z
+TCK-5095,Exporting audit logs,Is it possible to export the security audit logs via API? I only see an option to download them manually.,CUST-10095,In-App Chat,2026-07-29T22:07:35Z
+TCK-5096,Data leak in public dashboard,Private customer information is somehow showing up on the public facing dashboard. Take it down now!,CUST-10096,Community Forum,2026-07-28T03:05:25Z
+TCK-5097,Webhook delays,We are seeing a 15-minute delay on all incoming webhooks. This is causing sync issues with our CRM.,CUST-10097,Security Desk,2026-07-27T19:09:08Z
+TCK-5098,Exporting audit logs,Is it possible to export the security audit logs via API? I only see an option to download them manually.,CUST-10098,Email,2026-07-26T10:15:06Z
+TCK-5099,Custom font not rendering,"We uploaded our corporate font for the customer portal, but it's defaulting to Arial on mobile devices.",CUST-10099,Community Forum,2026-07-30T00:19:52Z
+TCK-5100,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10100,In-App Chat,2026-07-26T20:35:23Z
+TCK-5101,Mobile app crashing on launch,"Since the update yesterday, the iOS app crashes immediately when I open it. I'm on iOS 16.",CUST-10101,API / Monitoring Webhook,2026-07-28T03:37:56Z
+TCK-5102,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10102,Phone,2026-07-25T04:24:29Z
+TCK-5103,Bug in date picker,"When selecting a date range in the analytics tab, the end date always jumps back by one day. It's annoying to work around.",CUST-10103,Security Desk,2026-07-28T10:15:15Z
+TCK-5104,Question about SOC2 compliance,We are doing an internal audit. Can you provide your latest SOC2 Type 2 report? No rush.,CUST-10104,Email,2026-07-26T14:58:35Z
+TCK-5105,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10105,Twitter/X DM,2026-07-30T13:29:29Z
+TCK-5106,What are the upcoming features?,Is there a public roadmap I can look at? Curious about what's coming in Q3.,CUST-10106,Phone,2026-07-29T14:28:30Z
+TCK-5107,Need help configuring SLA alerts,"I want to set up an alert when a ticket is unassigned for 2 hours, but the UI is confusing. How do I do this?",CUST-10107,Phone,2026-07-28T01:22:51Z
+TCK-5108,Custom font not rendering,"We uploaded our corporate font for the customer portal, but it's defaulting to Arial on mobile devices.",CUST-10108,Slack Integration,2026-07-29T07:51:37Z
+TCK-5109,Need help configuring SLA alerts,"I want to set up an alert when a ticket is unassigned for 2 hours, but the UI is confusing. How do I do this?",CUST-10109,API / Monitoring Webhook,2026-07-27T14:22:55Z
+TCK-5110,Feedback on new layout,"I like the new sidebar navigation, but I preferred having the search bar in the top right.",CUST-10110,Community Forum,2026-07-28T07:30:38Z
+TCK-5111,Need help configuring SLA alerts,"I want to set up an alert when a ticket is unassigned for 2 hours, but the UI is confusing. How do I do this?",CUST-10111,Web Portal,2026-07-30T04:28:11Z
+TCK-5112,Need help configuring SLA alerts,"I want to set up an alert when a ticket is unassigned for 2 hours, but the UI is confusing. How do I do this?",CUST-10112,Email,2026-07-29T22:56:53Z
+TCK-5113,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10113,Security Desk,2026-07-26T01:35:50Z
+TCK-5114,Changing company name,Our company recently rebranded. How do I change the organization name on our invoices?,CUST-10114,Twitter/X DM,2026-07-26T01:23:53Z
+TCK-5115,Requesting a demo for another team,Our marketing team is interested in using your tool. Can we schedule a quick 15 min demo for them next week?,CUST-10115,Security Desk,2026-07-30T13:26:13Z
+TCK-5116,Can't delete old project,"I have an old archived project that I want to completely delete, but the delete button is greyed out. I am an admin.",CUST-10116,Developer Portal,2026-07-25T05:20:28Z
+TCK-5117,Slack notification formatting,The messages sent to our Slack channel have broken markdown links. It makes them hard to read.,CUST-10117,Twitter/X DM,2026-07-30T23:23:56Z
+TCK-5118,Question about API rate limits,Can you clarify if the 1000 req/min limit is per IP or per API key? The documentation is a bit vague.,CUST-10118,Phone,2026-07-25T23:40:23Z
+TCK-5119,Requesting a demo for another team,Our marketing team is interested in using your tool. Can we schedule a quick 15 min demo for them next week?,CUST-10119,In-App Chat,2026-07-28T16:28:06Z
+TCK-5120,Thanks for the great support,Just wanted to say thanks to Sarah for helping me yesterday. The issue is completely resolved now!,CUST-10120,Email,2026-07-29T14:05:56Z
+TCK-5121,Service severely degraded,"The dashboard is loading incredibly slowly, taking up to 30 seconds for a single page. It's heavily impacting our workflow.",CUST-10121,API / Monitoring Webhook,2026-07-29T06:12:12Z
+TCK-5122,Custom font not rendering,"We uploaded our corporate font for the customer portal, but it's defaulting to Arial on mobile devices.",CUST-10122,Community Forum,2026-07-28T15:06:38Z
+TCK-5123,Exporting audit logs,Is it possible to export the security audit logs via API? I only see an option to download them manually.,CUST-10123,Community Forum,2026-07-29T21:53:57Z
+TCK-5124,Missing data in export,"When I export the user list to CSV, the 'Company' column is completely blank for all 5000 records.",CUST-10124,Web Portal,2026-07-25T11:38:08Z
+TCK-5125,Changing company name,Our company recently rebranded. How do I change the organization name on our invoices?,CUST-10125,Community Forum,2026-07-26T06:28:10Z
+TCK-5126,Plugin not loading on Firefox,"The browser extension works great on Chrome, but on Firefox it just shows a spinning loading icon indefinitely.",CUST-10126,Email,2026-07-28T11:08:41Z
+TCK-5127,Dashboard graph displaying wrong timezone,"The traffic graph seems to be in UTC, but my account settings are set to PST. Can this be fixed?",CUST-10127,In-App Chat,2026-07-29T01:54:00Z
+TCK-5128,Cannot login to admin portal,Our entire team is locked out of the system. Getting 'Invalid SSO token' errors on every attempt.,CUST-10128,Security Desk,2026-07-26T03:40:10Z
+TCK-5129,Integration with HubSpot,We are trying to map custom fields to HubSpot but some of them aren't showing up in the dropdown list.,CUST-10129,Community Forum,2026-07-30T23:00:40Z
+TCK-5130,Custom font not rendering,"We uploaded our corporate font for the customer portal, but it's defaulting to Arial on mobile devices.",CUST-10130,Email,2026-07-28T23:02:53Z
+TCK-5131,Thanks for the great support,Just wanted to say thanks to Sarah for helping me yesterday. The issue is completely resolved now!,CUST-10131,Web Portal,2026-07-27T03:14:52Z
+TCK-5132,Feature request: Dark mode,Is there any plan to implement a dark mode? The current interface is really bright when working late.,CUST-10132,Web Portal,2026-07-27T08:38:08Z
+TCK-5133,Question about API rate limits,Can you clarify if the 1000 req/min limit is per IP or per API key? The documentation is a bit vague.,CUST-10133,API / Monitoring Webhook,2026-07-25T17:21:47Z
+TCK-5134,SSO authentication failing for new users,We just onboarded 5 new employees and none of them can login via Okta SSO. Existing users are fine.,CUST-10134,Slack Integration,2026-07-30T20:50:54Z
+TCK-5135,Webhook delays,We are seeing a 15-minute delay on all incoming webhooks. This is causing sync issues with our CRM.,CUST-10135,In-App Chat,2026-07-28T20:48:43Z
+TCK-5136,Billing error charged us 10x,I just saw a charge for $5000 instead of our usual $500. This is overdrafting our account. Reverse this immediately!,CUST-10136,In-App Chat,2026-07-30T15:42:11Z
+TCK-5137,Integration token expired prematurely,Our OAuth token for the Salesforce integration expired after 2 days instead of 30. We have to keep re-authenticating.,CUST-10137,Phone,2026-07-25T09:07:24Z
+TCK-5138,Reports not generating,The end-of-month financial reports are stuck in 'Processing' state for over 6 hours now. We need these for tomorrow's board meeting.,CUST-10138,Slack Integration,2026-07-25T05:28:40Z

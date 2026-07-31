@@ -15,12 +15,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   totalFilteredCount,
   totalUnfilteredCount,
 }) => {
-  const urgencyOptions: Array<{ id: 'all' | UrgencyLevel; label: string; badgeClass: string }> = [
-    { id: 'all', label: 'All Urgencies', badgeClass: 'badge-category' },
-    { id: 'critical', label: 'Critical', badgeClass: 'badge-critical' },
-    { id: 'high', label: 'High', badgeClass: 'badge-high' },
-    { id: 'medium', label: 'Medium', badgeClass: 'badge-medium' },
-    { id: 'low', label: 'Low', badgeClass: 'badge-low' },
+  const urgencyOptions: Array<{ id: 'all' | UrgencyLevel; label: string }> = [
+    { id: 'all', label: 'All Urgencies' },
+    { id: 'critical', label: 'Critical' },
+    { id: 'high', label: 'High' },
+    { id: 'medium', label: 'Medium' },
+    { id: 'low', label: 'Low' },
   ];
 
   const categoryOptions: Array<{ id: 'all' | IssueType | string; label: string }> = [
@@ -57,33 +57,43 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     });
   };
 
+  const getUrgencyDotColor = (id: string): string => {
+    switch (id) {
+      case 'critical': return 'var(--critical-color)';
+      case 'high': return 'var(--high-color)';
+      case 'medium': return 'var(--medium-color)';
+      case 'low': return 'var(--low-color)';
+      default: return 'transparent';
+    }
+  };
+
   return (
     <div
-      className="glass-panel"
+      className="card"
       style={{
-        padding: '20px',
+        padding: '18px 20px',
         marginBottom: '24px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px',
+        gap: '14px',
       }}
     >
+      {/* Search + Category Row */}
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '16px',
+          gap: '14px',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
-        {/* Real-time search bar */}
-        <div style={{ position: 'relative', flex: '1 1 320px', minWidth: '260px' }}>
+        <div style={{ position: 'relative', flex: '1 1 300px', minWidth: '240px' }}>
           <Search
-            size={18}
+            size={17}
             style={{
               position: 'absolute',
-              left: '14px',
+              left: '13px',
               top: '50%',
               transform: 'translateY(-50%)',
               color: 'var(--text-muted)',
@@ -93,17 +103,25 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             type="text"
             value={filters.searchQuery}
             onChange={handleSearchChange}
-            placeholder="Search tickets by subject, body, or ID..."
+            placeholder="Search tickets by subject, body, or ID…"
             style={{
               width: '100%',
-              padding: '10px 38px 10px 42px',
-              backgroundColor: 'rgba(15, 23, 42, 0.8)',
-              border: '1px solid var(--border-glass)',
-              borderRadius: '10px',
+              padding: '9px 36px 9px 40px',
+              backgroundColor: 'var(--bg-input)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 'var(--radius-md)',
               color: 'var(--text-primary)',
-              fontSize: '0.9rem',
+              fontSize: '0.875rem',
               outline: 'none',
               transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-focus)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-primary)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           />
           {filters.searchQuery && (
@@ -112,7 +130,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onClick={() => onFilterChange({ ...filters, searchQuery: '' })}
               style={{
                 position: 'absolute',
-                right: '12px',
+                right: '10px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 background: 'none',
@@ -121,68 +139,67 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
+                padding: '2px',
               }}
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           )}
         </div>
 
-        {/* Category dropdown filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '200px' }}>
-          <Filter size={18} style={{ color: 'var(--text-secondary)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
+          <Filter size={17} style={{ color: 'var(--text-muted)' }} />
           <select
             value={filters.categoryFilter}
             onChange={handleCategoryChange}
             style={{
               flex: 1,
-              padding: '10px 14px',
-              backgroundColor: 'rgba(15, 23, 42, 0.8)',
-              border: '1px solid var(--border-glass)',
-              borderRadius: '10px',
+              padding: '9px 12px',
+              backgroundColor: 'var(--bg-input)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 'var(--radius-md)',
               color: 'var(--text-primary)',
-              fontSize: '0.9rem',
+              fontSize: '0.875rem',
               outline: 'none',
               cursor: 'pointer',
             }}
           >
             {categoryOptions.map((cat) => (
-              <option key={cat.id} value={cat.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+              <option key={cat.id} value={cat.id}>
                 {cat.label}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Reset filters button */}
         {isFiltered && (
           <button
             type="button"
             className="btn-secondary"
             onClick={handleReset}
-            style={{ padding: '8px 14px', fontSize: '0.825rem' }}
+            style={{ padding: '7px 14px', fontSize: '0.8rem' }}
           >
-            <RotateCcw size={14} />
-            Reset Filters
+            <RotateCcw size={13} />
+            Reset
           </button>
         )}
       </div>
 
-      {/* Urgency Filter Pills */}
+      {/* Urgency Pills */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
           flexWrap: 'wrap',
-          paddingTop: '8px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+          paddingTop: '10px',
+          borderTop: '1px solid var(--border-subtle)',
         }}
       >
-        <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-          Urgency Filter:
+        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+          Urgency:
         </span>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {urgencyOptions.map((option) => {
             const isActive = filters.urgencyFilter === option.id;
             return (
@@ -191,17 +208,19 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 type="button"
                 onClick={() => handleUrgencyClick(option.id)}
                 style={{
-                  background: isActive ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.5)',
-                  border: isActive
-                    ? '1px solid var(--accent-cyan)'
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                  color: isActive ? '#ffffff' : 'var(--text-secondary)',
-                  borderRadius: '20px',
-                  padding: '6px 14px',
-                  fontSize: '0.8rem',
+                  background: isActive
+                    ? 'var(--urgency-pill-active-bg)'
+                    : 'var(--urgency-pill-inactive-bg)',
+                  border: `1px solid ${isActive ? 'var(--urgency-pill-active-border)' : 'var(--urgency-pill-inactive-border)'}`,
+                  color: isActive
+                    ? 'var(--urgency-pill-active-text)'
+                    : 'var(--urgency-pill-inactive-text)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '5px 13px',
+                  fontSize: '0.775rem',
                   fontWeight: isActive ? 600 : 500,
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.15s ease',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -210,17 +229,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 {option.id !== 'all' && (
                   <span
                     style={{
-                      width: '8px',
-                      height: '8px',
+                      width: '7px',
+                      height: '7px',
                       borderRadius: '50%',
-                      backgroundColor:
-                        option.id === 'critical'
-                          ? 'var(--critical-color)'
-                          : option.id === 'high'
-                          ? 'var(--high-color)'
-                          : option.id === 'medium'
-                          ? 'var(--medium-color)'
-                          : 'var(--low-color)',
+                      backgroundColor: getUrgencyDotColor(option.id),
                     }}
                   />
                 )}
@@ -230,7 +242,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           })}
         </div>
 
-        <div style={{ marginLeft: 'auto', fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+        <div style={{ marginLeft: 'auto', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
           Showing <strong>{totalFilteredCount}</strong> of <strong>{totalUnfilteredCount}</strong> tickets
         </div>
       </div>

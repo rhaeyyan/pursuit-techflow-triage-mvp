@@ -30,9 +30,9 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
       label: 'Total Tickets',
       count: total,
       pct: '100%',
-      icon: <Layers size={20} style={{ color: 'var(--accent-cyan)' }} />,
-      borderColor: 'var(--border-glass)',
-      glowColor: 'none',
+      icon: <Layers size={20} style={{ color: 'var(--accent-primary)' }} />,
+      borderColor: 'var(--border-primary)',
+      accentColor: 'var(--accent-primary)',
       badgeClass: 'badge-category',
       isPulse: false,
     },
@@ -43,7 +43,7 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
       pct: getPercentage(criticalCount),
       icon: <ShieldAlert size={20} style={{ color: 'var(--critical-color)' }} />,
       borderColor: 'var(--critical-border)',
-      glowColor: 'rgba(239, 68, 68, 0.15)',
+      accentColor: 'var(--critical-color)',
       badgeClass: 'badge-critical',
       isPulse: true,
     },
@@ -54,7 +54,7 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
       pct: getPercentage(highCount),
       icon: <AlertTriangle size={20} style={{ color: 'var(--high-color)' }} />,
       borderColor: 'var(--high-border)',
-      glowColor: 'rgba(249, 115, 22, 0.15)',
+      accentColor: 'var(--high-color)',
       badgeClass: 'badge-high',
       isPulse: false,
     },
@@ -65,7 +65,7 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
       pct: getPercentage(mediumCount),
       icon: <AlertCircle size={20} style={{ color: 'var(--medium-color)' }} />,
       borderColor: 'var(--medium-border)',
-      glowColor: 'rgba(6, 182, 212, 0.15)',
+      accentColor: 'var(--medium-color)',
       badgeClass: 'badge-medium',
       isPulse: false,
     },
@@ -76,7 +76,7 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
       pct: getPercentage(lowCount),
       icon: <Info size={20} style={{ color: 'var(--low-color)' }} />,
       borderColor: 'var(--low-border)',
-      glowColor: 'rgba(148, 163, 184, 0.1)',
+      accentColor: 'var(--low-color)',
       badgeClass: 'badge-low',
       isPulse: false,
     },
@@ -86,8 +86,8 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-        gap: '16px',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '14px',
         marginBottom: '24px',
       }}
     >
@@ -97,17 +97,15 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
         return (
           <div
             key={card.id}
-            className="glass-panel"
+            className="card"
             onClick={() => onSelectUrgencyFilter && onSelectUrgencyFilter(card.id)}
             style={{
-              padding: '18px 20px',
+              padding: '16px 18px',
               cursor: onSelectUrgencyFilter ? 'pointer' : 'default',
-              borderColor: isSelected ? 'var(--accent-cyan)' : card.borderColor,
+              borderColor: isSelected ? 'var(--accent-primary)' : card.borderColor,
               boxShadow: isSelected
-                ? '0 0 16px rgba(6, 182, 212, 0.3)'
-                : card.glowColor !== 'none'
-                ? `0 4px 20px ${card.glowColor}`
-                : undefined,
+                ? '0 0 0 2px var(--accent-primary), var(--shadow-sm)'
+                : 'var(--shadow-card)',
               transform: isSelected ? 'scale(1.02)' : 'none',
               transition: 'all 0.2s ease',
             }}
@@ -122,7 +120,7 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
             >
               <span
                 style={{
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   color: 'var(--text-secondary)',
                   display: 'flex',
@@ -139,11 +137,14 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <span
                 style={{
-                  fontSize: '2rem',
+                  fontSize: '1.85rem',
                   fontWeight: 800,
                   lineHeight: 1,
                   fontFamily: 'var(--font-family-heading)',
-                  color: card.id === 'critical' && criticalCount > 0 ? 'var(--critical-color)' : 'var(--text-primary)',
+                  color:
+                    card.id === 'critical' && criticalCount > 0
+                      ? 'var(--critical-color)'
+                      : 'var(--text-primary)',
                 }}
               >
                 {card.count}

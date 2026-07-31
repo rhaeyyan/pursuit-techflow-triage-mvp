@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileSpreadsheet, Sparkles, Download, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Sparkles, Download, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
 import { downloadSampleCSV } from '../mockData';
 
 interface UploadCardProps {
   onFileUpload: (file: File) => void;
   onLoadDemo: () => void;
+  onClearQueue?: () => void;
+  hasTickets?: boolean;
   isUploading: boolean;
   selectedFileName?: string | null;
 }
@@ -12,6 +14,8 @@ interface UploadCardProps {
 export const UploadCard: React.FC<UploadCardProps> = ({
   onFileUpload,
   onLoadDemo,
+  onClearQueue,
+  hasTickets = false,
   isUploading,
   selectedFileName,
 }) => {
@@ -59,39 +63,70 @@ export const UploadCard: React.FC<UploadCardProps> = ({
   };
 
   return (
-    <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+    <div className="card" style={{ padding: '22px', marginBottom: '24px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FileSpreadsheet style={{ color: 'var(--accent-cyan)' }} size={22} />
+          <h2
+            style={{
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <FileSpreadsheet style={{ color: 'var(--accent-primary)' }} size={20} />
             Ticket Ingestion & Batch Triage
           </h2>
-          <p className="subtext">
-            Upload custom CSV support tickets for automated AI classification & urgency scoring
+          <p className="subtext" style={{ marginTop: '2px' }}>
+            Upload CSV support tickets for automated classification & urgency scoring
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
             type="button"
             className="btn-accent"
             onClick={onLoadDemo}
             disabled={isUploading}
-            title="Instantly load benchmark Kaggle support tickets dataset"
+            title="Load benchmark Kaggle support tickets dataset"
           >
-            <Sparkles size={16} />
-            Load Demo Dataset (Kaggle Support Tickets)
+            <Sparkles size={14} />
+            Load Demo Dataset
           </button>
-          
+
           <button
             type="button"
             className="btn-secondary"
             onClick={downloadSampleCSV}
             title="Download example CSV schema format"
           >
-            <Download size={16} />
-            Download Sample CSV
+            <Download size={14} />
+            Sample CSV
           </button>
+
+          {hasTickets && onClearQueue && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onClearQueue}
+              style={{ color: 'var(--critical-color)', borderColor: 'var(--critical-border)' }}
+              title="Clear loaded tickets and return to empty upload state"
+            >
+              <Trash2 size={14} />
+              Clear Queue
+            </button>
+          )}
         </div>
       </div>
 
@@ -102,19 +137,19 @@ export const UploadCard: React.FC<UploadCardProps> = ({
         onClick={() => fileInputRef.current?.click()}
         style={{
           border: isDragOver
-            ? '2px dashed var(--accent-cyan)'
-            : '2px dashed rgba(255, 255, 255, 0.15)',
-          borderRadius: '12px',
-          padding: '36px 20px',
+            ? '2px dashed var(--accent-primary)'
+            : '2px dashed var(--border-primary)',
+          borderRadius: 'var(--radius-md)',
+          padding: '32px 20px',
           textAlign: 'center',
           cursor: isUploading ? 'not-allowed' : 'pointer',
-          backgroundColor: isDragOver ? 'rgba(6, 182, 212, 0.08)' : 'rgba(15, 23, 42, 0.4)',
-          transition: 'all 0.25s ease',
+          backgroundColor: isDragOver ? 'rgba(59, 130, 246, 0.04)' : 'var(--bg-input)',
+          transition: 'all 0.2s ease',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '12px',
+          gap: '10px',
         }}
       >
         <input
@@ -128,45 +163,103 @@ export const UploadCard: React.FC<UploadCardProps> = ({
 
         <div
           style={{
-            width: '56px',
-            height: '56px',
+            width: '48px',
+            height: '48px',
             borderRadius: '50%',
-            backgroundColor: isDragOver ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+            backgroundColor: isDragOver ? 'rgba(59, 130, 246, 0.1)' : 'var(--bg-card-hover)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: isDragOver ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+            color: isDragOver ? 'var(--accent-primary)' : 'var(--text-muted)',
             transition: 'all 0.2s ease',
           }}
         >
           {isUploading ? (
-            <UploadCloud className="animate-spin" size={28} />
+            <UploadCloud className="animate-spin" size={24} />
           ) : (
-            <UploadCloud size={28} />
+            <UploadCloud size={24} />
           )}
         </div>
 
         <div>
-          <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
+          <p
+            style={{
+              fontWeight: 600,
+              fontSize: '0.925rem',
+              color: 'var(--text-primary)',
+              marginBottom: '4px',
+            }}
+          >
             {isUploading ? (
-              'Processing CSV with Triage Engine...'
+              'Processing CSV with Triage Engine…'
             ) : selectedFileName ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#34d399' }}>
-                <CheckCircle2 size={16} /> Selected: {selectedFileName}
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: 'var(--accent-emerald)',
+                }}
+              >
+                <CheckCircle2 size={15} /> Selected: {selectedFileName}
               </span>
             ) : (
               'Drag & drop your CSV file here, or click to browse'
             )}
           </p>
-          <p className="subtext">
-            Supports CSV files containing <code style={{ color: 'var(--accent-cyan)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>ticket_id</code>, <code style={{ color: 'var(--accent-cyan)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>subject</code>, <code style={{ color: 'var(--accent-cyan)', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>body</code>
+          <p className="subtext" style={{ fontSize: '0.8rem' }}>
+            Supports CSV files with{' '}
+            <code
+              style={{
+                color: 'var(--accent-primary)',
+                background: 'var(--bg-code)',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                fontSize: '0.775rem',
+              }}
+            >
+              ticket_id
+            </code>
+            ,{' '}
+            <code
+              style={{
+                color: 'var(--accent-primary)',
+                background: 'var(--bg-code)',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                fontSize: '0.775rem',
+              }}
+            >
+              subject
+            </code>
+            ,{' '}
+            <code
+              style={{
+                color: 'var(--accent-primary)',
+                background: 'var(--bg-code)',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                fontSize: '0.775rem',
+              }}
+            >
+              body
+            </code>
           </p>
         </div>
       </div>
 
       {errorMsg && (
-        <div style={{ marginTop: '12px', color: 'var(--critical-color)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <AlertCircle size={16} />
+        <div
+          style={{
+            marginTop: '12px',
+            color: 'var(--critical-color)',
+            fontSize: '0.825rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <AlertCircle size={15} />
           {errorMsg}
         </div>
       )}

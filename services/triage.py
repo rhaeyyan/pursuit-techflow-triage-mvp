@@ -149,6 +149,58 @@ def sort_tickets(tickets: list[TriagedTicket]) -> list[TriagedTicket]:
     )
 
 
+HEADER_ALIASES = {
+    # ticket_id
+    "ticket_id": "ticket_id",
+    "ticket id": "ticket_id",
+    "id": "ticket_id",
+    "ticket_number": "ticket_id",
+    "ticket number": "ticket_id",
+    # subject
+    "subject": "subject",
+    "ticket subject": "subject",
+    "title": "subject",
+    "issue_title": "subject",
+    "issue title": "subject",
+    # body
+    "body": "body",
+    "ticket description": "body",
+    "description": "body",
+    "details": "body",
+    "issue_details": "body",
+    "issue details": "body",
+    "message": "body",
+    # customer_id
+    "customer_id": "customer_id",
+    "customer id": "customer_id",
+    "customer_name": "customer_id",
+    "customer name": "customer_id",
+    "user_id": "customer_id",
+    "user id": "customer_id",
+    # channel
+    "channel": "channel",
+    "source": "channel",
+    "ticket_channel": "channel",
+    "ticket channel": "channel",
+    # created_at
+    "created_at": "created_at",
+    "created at": "created_at",
+    "date created": "created_at",
+    "date_created": "created_at",
+    "timestamp": "created_at",
+}
+
+
+def _normalize_header(header: str) -> str | None:
+    cleaned = header.strip().lower()
+    if cleaned in HEADER_ALIASES:
+        return HEADER_ALIASES[cleaned]
+    snake = cleaned.replace(" ", "_")
+    if snake in HEADER_ALIASES:
+        return HEADER_ALIASES[snake]
+    return None
+
+
 def parse_csv_tickets(content_bytes: bytes) -> list[TicketInput]:
     try:
         text = content_bytes.decode("utf-8-sig")
@@ -161,14 +213,27 @@ def parse_csv_tickets(content_bytes: bytes) -> list[TicketInput]:
     if not reader.fieldnames:
         raise ValueError("CSV file is empty or headerless")
 
-    fieldnames = [f.strip() for f in reader.fieldnames if f]
+    header_map: dict[str, str] = {}
+    for raw_header in reader.fieldnames:
+        if raw_header:
+            canonical = _normalize_header(raw_header)
+            if canonical:
+                header_map[raw_header] = canonical
+
     required = {"ticket_id", "subject", "body"}
-    if not required.issubset(set(fieldnames)):
-        raise ValueError(f"CSV missing required headers: {required - set(fieldnames)}")
+    mapped_fields = set(header_map.values())
+    if not required.issubset(mapped_fields):
+        raise ValueError(f"CSV missing required headers: {required - mapped_fields}")
 
     tickets: list[TicketInput] = []
     for row in reader:
-        cleaned_row = {k.strip(): (v.strip() if v else None) for k, v in row.items() if k}
+        cleaned_row: dict[str, str] = {}
+        for raw_k, v in row.items():
+            if raw_k and raw_k in header_map and v:
+                v_clean = v.strip()
+                if v_clean:
+                    cleaned_row[header_map[raw_k]] = v_clean
+
         t_id = cleaned_row.get("ticket_id")
         subj = cleaned_row.get("subject")
         body = cleaned_row.get("body")
@@ -191,3 +256,4 @@ def parse_csv_tickets(content_bytes: bytes) -> list[TicketInput]:
         raise ValueError("CSV contains no valid ticket records")
 
     return tickets
+

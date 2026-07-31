@@ -118,9 +118,7 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 
 ### Status
 
-Project scaffolding is complete. The agent operating manual (`CLAUDE.md`), reference documents,
-and team roster are in place. No product code has been written yet — the first task is to
-ingest the Kaggle dataset and classify a single ticket end-to-end.
+V1 backend core logic, flexible CSV parsing with header alias normalization, ticket classification pipeline (deterministic rules + bounded Ollama Gemma-4 fallback + safe default fallback), deterministic urgency prioritization, and FastAPI endpoints are complete and fully tested (12/12 pytest suite passing).
 
 ---
 

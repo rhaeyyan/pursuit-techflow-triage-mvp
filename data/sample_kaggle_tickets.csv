@@ -1,0 +1,11 @@
+Ticket ID,Ticket Subject,Ticket Description,Customer ID,Channel,Date Created
+KAG-1001,Billing error on monthly subscription,"I was double charged $199 on my account invoice this morning. Please process a refund immediately.",CUST-501,Email,2026-07-30T08:15:00
+KAG-1002,Critical server down in US-East region,"Our entire production cluster is reporting 500 error and system crash. Can't access any backend endpoints.",CUST-502,API,2026-07-30T08:30:00
+KAG-1003,Password reset request,"User account locked after three incorrect attempts. Need password reset link sent to admin email.",CUST-503,Portal,2026-07-30T09:00:00
+KAG-1004,System outage and data loss in analytics module,"Seeing system outage when querying customer metrics. Urgent data loss concern for daily reports.",CUST-504,Web,2026-07-30T09:12:00
+KAG-1005,Request refund for unused seats,"We downgraded our plan last week and need a refund or invoice credit for unused user licenses.",CUST-505,Email,2026-07-30T09:45:00
+KAG-1006,Change email address on primary account,"Please change email associated with user ID to manager@techflow-corp.com.",CUST-506,Chat,2026-07-30T10:00:00
+KAG-1007,Unauthorized charge on credit card,"Unrecognized recurring fee charged to our credit card. Unauthorized charge needs review.",CUST-507,Phone,2026-07-30T10:15:00
+KAG-1008,UI bug on dashboard metrics table,"Minor bug causing sorting column alignment issue on desktop browsers.",CUST-508,Web,2026-07-30T10:30:00
+KAG-1009,Payment failed notification on invoice #4421,"Payment failed when updating payment method. Please send new invoice link.",CUST-509,Portal,2026-07-30T11:00:00
+KAG-1010,Feature request for dark mode theme,"Would love to see a dark mode color palette option added to the user settings interface.",CUST-510,Form,2026-07-30T11:20:00

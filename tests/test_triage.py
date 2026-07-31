@@ -22,6 +22,7 @@ from services.triage import (
     DefaultFallbackClassifier,
     triage_tickets,
     sort_tickets,
+    parse_csv_tickets,
 )
 
 
@@ -290,3 +291,35 @@ def test_triage_csv_upload_endpoint_invalid_csv():
     response = client.post("/api/tickets/triage", files=files)
     assert response.status_code == 400
     assert "detail" in response.json()
+
+
+def test_parse_csv_flexible_headers():
+    """Test parse_csv_tickets successfully parses CSV files with varied column header names."""
+    csv_bytes_1 = (
+        "Ticket ID,Ticket Subject,Ticket Description,Customer Name,Channel,Date Created\n"
+        'TCK-201,"Payment Issue","Cannot process payment",CUST-88,Email,2026-07-30T14:00:00\n'
+    ).encode("utf-8")
+
+    tickets_1 = parse_csv_tickets(csv_bytes_1)
+    assert len(tickets_1) == 1
+    assert tickets_1[0].ticket_id == "TCK-201"
+    assert tickets_1[0].subject == "Payment Issue"
+    assert tickets_1[0].body == "Cannot process payment"
+    assert tickets_1[0].customer_id == "CUST-88"
+    assert tickets_1[0].channel == "Email"
+    assert tickets_1[0].created_at == "2026-07-30T14:00:00"
+
+    csv_bytes_2 = (
+        "Ticket ID,Subject,Description,Customer ID,Channel,created_at\n"
+        'TCK-202,"Login Bug","Unable to login",CUST-99,Web,2026-07-30T15:00:00\n'
+    ).encode("utf-8")
+
+    tickets_2 = parse_csv_tickets(csv_bytes_2)
+    assert len(tickets_2) == 1
+    assert tickets_2[0].ticket_id == "TCK-202"
+    assert tickets_2[0].subject == "Login Bug"
+    assert tickets_2[0].body == "Unable to login"
+    assert tickets_2[0].customer_id == "CUST-99"
+    assert tickets_2[0].channel == "Web"
+    assert tickets_2[0].created_at == "2026-07-30T15:00:00"
+

@@ -1,0 +1,24 @@
+## Session: 2026-07-31 11:40 EDT
+- **Shipped**: Updated `CLAUDE.md` / `GEMINI.md` for Gemini & Claude dual-compatibility (hooks, agents, slash commands); updated `.claude/settings.json`. Committed (`805375c`) and pushed to `main`.
+- **Blocked**: None.
+- **Next Step**: Awaiting next user task or ticket queue feature specification.
+
+## Session: 2026-07-31 11:35 EDT
+- **Shipped**: Added AI draft response generation feature (`/api/generate-response`) in backend & React frontend with draft response preview card and copy functionality (`4c0bcae`).
+- **Blocked**: None.
+- **Next Step**: Review operating manual compatibility.
+
+## Session: 2026-07-31 11:00 EDT
+- **Shipped**: UI/UX overhaul with corporate warm cream light mode, tooltips, clear queue button, footer links, and 138-ticket sample dataset (`ec14cfc`, `df68162`).
+- **Blocked**: None.
+- **Next Step**: Implement draft AI support responses for triaged tickets.
+
+## Session: 2026-07-30 22:45 EDT
+- **Shipped**: Added cloud LLM provider fallback (Groq & Gemini), flexible CSV column mapping, deployment guides (`DEPLOYMENT.md`), `render.yaml`, `vercel.json`, and directory consolidation (`451acd2`, `4af2d20`, `dfd5ea3`, `05e7b7c`, `de2428e`).
+- **Blocked**: None.
+- **Next Step**: Polish frontend UI theme and tooltips.
+
+## Session: 2026-07-30 22:10 EDT
+- **Shipped**: Initial walking skeleton — Python FastAPI backend triage engine with rule-based classification & prioritization (`3529919`), React TypeScript Vite frontend SPA (`999ff93`, `002-frontend-spa.md`).
+- **Blocked**: None.
+- **Next Step**: Add multi-provider LLM fallback and flexible CSV header ingestion.

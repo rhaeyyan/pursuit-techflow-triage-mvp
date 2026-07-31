@@ -385,3 +385,42 @@ def test_cloud_llm_provider_fallback(monkeypatch):
         assert mock_post.called
 
 
+# ---------------------------------------------------------------------------
+# 7. AI & Template Suggested Response Generation Tests
+# ---------------------------------------------------------------------------
+
+def test_generate_ticket_response_template_fallback():
+    """Test generate_ticket_response falls back to smart template when no LLM API key is present."""
+    from services.triage import generate_ticket_response
+
+    text, source = generate_ticket_response(
+        ticket_id="TCK-999",
+        subject="Database connection timeout",
+        body="Database timed out on primary cluster.",
+        issue_type="technical",
+        urgency="critical",
+    )
+    assert source == "template"
+    assert "Database connection timeout" in text
+    assert "TechFlow Support Team" in text
+
+
+def test_generate_ticket_response_endpoint():
+    """Test POST /api/tickets/generate-response endpoint."""
+    client = TestClient(app)
+    payload = {
+        "ticket_id": "TCK-500",
+        "subject": "Invoice refund request",
+        "body": "Double charge on account invoice #123",
+        "issue_type": "billing",
+        "urgency": "high",
+    }
+    response = client.post("/api/tickets/generate-response", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ticket_id"] == "TCK-500"
+    assert "suggested_response" in data
+    assert "Invoice refund request" in data["suggested_response"]
+
+
+

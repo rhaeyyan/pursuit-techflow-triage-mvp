@@ -4,8 +4,8 @@ from collections import Counter
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from schemas import TriageResponse
-from services.triage import parse_csv_tickets, triage_tickets
+from schemas import TriageResponse, GenerateResponseRequest, GenerateResponseOutput
+from services.triage import parse_csv_tickets, triage_tickets, generate_ticket_response
 
 app = FastAPI(title="TechFlow Support Queue API")
 
@@ -41,3 +41,23 @@ async def triage_csv_endpoint(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(err))
     except Exception as err:
         raise HTTPException(status_code=500, detail=f"Internal processing error: {err}")
+
+
+@app.post("/api/tickets/generate-response", response_model=GenerateResponseOutput)
+def generate_response_endpoint(request: GenerateResponseRequest):
+    try:
+        suggested_text, source = generate_ticket_response(
+            ticket_id=request.ticket_id,
+            subject=request.subject,
+            body=request.body,
+            issue_type=request.issue_type,
+            urgency=request.urgency,
+        )
+        return GenerateResponseOutput(
+            ticket_id=request.ticket_id,
+            suggested_response=suggested_text,
+            source=source,
+        )
+    except Exception as err:
+        raise HTTPException(status_code=500, detail=f"Failed to generate response: {err}")
+

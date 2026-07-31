@@ -36,3 +36,18 @@ class TriageResponse(BaseModel):
     total_tickets: int
     tickets: list[TriagedTicket]
     urgency_counts: dict[str, int] = Field(default_factory=dict)
+
+
+class GenerateResponseRequest(BaseModel):
+    ticket_id: str
+    subject: str
+    body: str
+    issue_type: str = "general"
+    urgency: str = "medium"
+
+
+class GenerateResponseOutput(BaseModel):
+    ticket_id: str
+    suggested_response: str
+    source: str  # "llm" or "template"
+

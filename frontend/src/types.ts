@@ -28,3 +28,10 @@ export interface FilterState {
   categoryFilter: 'all' | IssueType | string;
   searchQuery: string;
 }
+
+export interface GenerateResponseOutput {
+  ticket_id: string;
+  suggested_response: string;
+  source: string;
+}
+

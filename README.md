@@ -37,6 +37,7 @@ Given a batch of incoming support tickets (as a CSV upload), TechFlow Support Qu
    tickets at the top.
 4. **Categorizes everything** so the team can route tickets to the right person without reading
    each one first.
+5. **Drafts AI customer responses** -- enables specialists to generate, review, and copy AI-driven or template-backed email response drafts for any ticket with one click.
 
 Jordan uploads the morning's ticket export, and the app gives back a prioritized, categorized
 table that replaces the 90-minute manual sort with something the team can act on immediately.
@@ -88,7 +89,6 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 - Multi-agent workflows (LangChain, CrewAI) -- rule engine + lightweight fallback suffices.
 - MCP tool connectivity -- this tool is used by a human, not by an AI agent.
 - User accounts, authentication, or saved history.
-- Auto-generated ticket responses.
 
 ### Planned V2 scope (only when V1 is complete and working)
 
@@ -107,11 +107,12 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 
 **V1 Full-Stack MVP Complete & Verified.**
 
-- **Backend Core**: Flexible CSV parsing with header alias normalization, 4-tier urgency scoring (`critical=4`, `high=3`, `medium=2`, `low=1`), classification pipeline (deterministic rule engine + safe default fallback), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). 100% test coverage with 13/13 passing `pytest` suite.
+- **Backend Core**: Flexible CSV parsing with header alias normalization, 4-tier urgency scoring (`critical=4`, `high=3`, `medium=2`, `low=1`), classification pipeline (deterministic rule engine + safe default fallback), AI customer response draft generator (`/api/tickets/generate-response`), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). 100% test coverage with 15/15 passing `pytest` suite.
 - **Frontend SPA**: Modern, corporate-friendly UI with:
   - 🌗 **Light/Dark Theme System**: Warm corporate cream palette for light mode alongside polished dark mode with smooth theme transitions and `localStorage` persistence.
   - 📥 **Batch CSV Upload & Drag-and-Drop**: Supports arbitrary CSV uploads, custom header alias mapping, and one-click demo data loading.
   - 📋 **Prioritized Triage Table**: Ranked ticket queue sorted by urgency score, live search, issue category filtering, expandable ticket body previews, and column sorting.
+  - 🤖 **AI-Assisted Draft Responses**: On-demand AI draft response generation inside expanded ticket views with one-click copy functionality.
   - 💡 **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
   - 🗑️ **Queue Management**: One-click queue reset to return to clean upload state.
 - **Demo Datasets**: Includes Kaggle support ticket benchmark dataset (10 tickets) and a scalable 138-ticket sample CSV (`data/sample_138_tickets.csv`) for demonstration.

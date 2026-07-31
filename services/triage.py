@@ -392,3 +392,135 @@ def parse_csv_tickets(content_bytes: bytes) -> list[TicketInput]:
         raise ValueError("CSV contains no valid ticket records")
 
     return tickets
+
+
+def generate_ticket_response(
+    ticket_id: str,
+    subject: str,
+    body: str,
+    issue_type: str = "general",
+    urgency: str = "medium",
+) -> tuple[str, str]:
+    """Generates an AI or template-driven suggested response for a support ticket.
+    Returns (suggested_response_text, source_string).
+    """
+    # 1. Try Groq LLM if API key available
+    groq_key = os.getenv("GROQ_API_KEY")
+    if groq_key:
+        try:
+            headers = {
+                "Authorization": f"Bearer {groq_key}",
+                "Content-Type": "application/json",
+            }
+            prompt = (
+                "You are an expert customer support specialist for TechFlow SaaS. "
+                "Draft a polite, professional, and helpful customer email response for this ticket.\n"
+                f"Ticket ID: {ticket_id}\n"
+                f"Issue Category: {issue_type}\n"
+                f"Urgency Level: {urgency}\n"
+                f"Subject: {subject}\n"
+                f"Body: {body}\n\n"
+                "Requirements:\n"
+                "- Write a direct, empathetic, and professional response.\n"
+                "- Include appropriate next steps based on the issue category.\n"
+                "- Keep the response concise (2-4 paragraphs).\n"
+                "- Do not include placeholders like [Your Name] — sign off as 'TechFlow Support Team'."
+            )
+            payload = {
+                "model": "gemma2-9b-it",
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            res = httpx.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=4.0,
+            )
+            if res.status_code == 200:
+                data = res.json()
+                choices = data.get("choices", [])
+                if choices:
+                    text = choices[0].get("message", {}).get("content", "").strip()
+                    if text:
+                        return text, "llm"
+        except Exception:
+            pass
+
+    # 2. Try Gemini LLM if API key available
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if gemini_key:
+        try:
+            endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+            prompt = (
+                "You are an expert customer support specialist for TechFlow SaaS. "
+                "Draft a polite, professional, and helpful customer email response for this ticket.\n"
+                f"Ticket ID: {ticket_id}\n"
+                f"Issue Category: {issue_type}\n"
+                f"Urgency Level: {urgency}\n"
+                f"Subject: {subject}\n"
+                f"Body: {body}\n\n"
+                "Sign off as 'TechFlow Support Team'."
+            )
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+            res = httpx.post(endpoint, json=payload, timeout=4.0)
+            if res.status_code == 200:
+                data = res.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        text = parts[0].get("text", "").strip()
+                        if text:
+                            return text, "llm"
+        except Exception:
+            pass
+
+    # 3. Deterministic Smart Template Fallback
+    category_norm = issue_type.lower()
+    urgency_norm = urgency.lower()
+
+    greeting = "Hello,\n\nThank you for reaching out to TechFlow Support."
+
+    if "billing" in category_norm:
+        if urgency_norm == "critical":
+            body_reply = (
+                f"We have flagged your ticket regarding '{subject}' as Critical Priority. "
+                "Our billing operations and finance team has been immediately notified to audit your transaction records. "
+                "Any erroneous billing charges or duplicate invoices will be reversed promptly within 1 business day."
+            )
+        else:
+            body_reply = (
+                f"We have received your billing inquiry regarding '{subject}'. "
+                "Our accounting team is reviewing invoice details for your account and will confirm payment adjustments or credit status shortly."
+            )
+    elif "technical" in category_norm:
+        if urgency_norm == "critical":
+            body_reply = (
+                f"We have escalated your report '{subject}' to our Senior Infrastructure & Site Reliability Engineering team as a Critical Incident. "
+                "Our engineers are actively investigating server logs and system metrics. We will provide real-time updates as we work toward resolution."
+            )
+        else:
+            body_reply = (
+                f"Our technical engineering team is investigating your report regarding '{subject}'. "
+                "We are testing steps to reproduce the issue and will share diagnostic findings or a patch update shortly."
+            )
+    elif "account" in category_norm:
+        body_reply = (
+            f"We have received your account security inquiry regarding '{subject}'. "
+            "To safeguard your account integrity, our security desk is verifying session logs and access controls. "
+            "If you are unable to access your portal, please ensure your multi-factor authentication device is active."
+        )
+    elif "feature_request" in category_norm:
+        body_reply = (
+            f"Thank you for sharing your feature suggestion regarding '{subject}'! "
+            "We love hearing feedback from our community. Your request has been logged with our Product Management team for evaluation during upcoming roadmap planning cycles."
+        )
+    else:
+        body_reply = (
+            f"We have received your ticket regarding '{subject}' and assigned it to the appropriate specialist team. "
+            "We are currently reviewing your request details and will follow up with further information shortly."
+        )
+
+    closing = "\n\nPlease let us know if you have any additional details to add in the meantime.\n\nBest regards,\nTechFlow Support Team"
+    return f"{greeting}\n\n{body_reply}\n{closing}", "template"
+

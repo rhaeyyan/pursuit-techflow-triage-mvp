@@ -66,7 +66,9 @@ tool is built to work on any CSV of support tickets with similar structure.
 
 ## Try it
 
-*Not yet deployed. Run it locally (see Technical Notes below).*
+**Live Demo**: [https://pursuit-techflow-triage-mvp.vercel.app/](https://pursuit-techflow-triage-mvp.vercel.app/)
+
+*(Note: The backend is deployed on Render's free tier, so it may take 30-60 seconds to wake up on the first visit if it has been inactive).*
 
 ---
 

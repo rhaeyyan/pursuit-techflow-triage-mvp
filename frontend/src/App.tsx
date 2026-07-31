@@ -179,7 +179,7 @@ export const App: React.FC = () => {
           >
             {backendStatus === 'online' ? (
               <>
-                <ShieldCheck size={14} /> FastAPI + Gemma 4 E2B Connected
+                <ShieldCheck size={14} /> FastAPI Triage Engine Connected
               </>
             ) : backendStatus === 'offline' ? (
               <>

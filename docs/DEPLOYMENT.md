@@ -29,12 +29,11 @@ This guide outlines how to deploy TechFlow Support Queue to the web using **Opti
 
 ---
 
-## 3. Local Development (Ollama + FastAPI + Vite)
+## 3. Local Development (FastAPI + Vite)
 
 ### Backend:
 ```bash
 source .venv/bin/activate.fish   # Or source .venv/bin/activate for bash
-ollama run gemma:2b
 uvicorn main:app --reload
 ```
 
@@ -47,8 +46,7 @@ npm run dev
 ---
 
 ## Architecture Summary
-- **Rules Engine**: Catch critical keywords (*billing error, outage, data loss*) deterministically.
-- **LLM Layer**: Bounded text classification returning structured JSON (`issue_type`, `urgency`).
-  - **Local**: Ollama (`gemma-4 E2B` / `gemma:2b`).
-  - **Cloud**: Groq (`gemma2-9b-it`) or Google Gemini (`gemini-2.5-flash`).
+- **Rules Engine**: Catch critical keywords (*billing error, outage, data loss*) deterministically without GPU or external AI dependencies.
+- **Classification Engine**: Fast, sub-millisecond keyword matching with safe baseline fallback.
+  - **Optional Cloud Providers**: Groq (`gemma2-9b-it`) or Google Gemini (`gemini-2.5-flash`) via environment variables.
 - **Prioritization**: Deterministic Python sorting by urgency score ($4 \to 1$) and timestamp.

@@ -149,7 +149,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
         <div>
           <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
             {isUploading ? (
-              'Processing CSV with Gemma 4 E2B AI Engine...'
+              'Processing CSV with Triage Engine...'
             ) : selectedFileName ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#34d399' }}>
                 <CheckCircle2 size={16} /> Selected: {selectedFileName}

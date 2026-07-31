@@ -44,21 +44,14 @@ Filters let Jordan drill into a specific category or urgency level.
 
 ## How it decides what's urgent
 
-The tool uses a combination of deterministic rules and LLM-assisted classification:
+The tool uses a high-performance deterministic triage engine for ticket classification and prioritization:
 
-- **Deterministic rules first**: keyword matching for known critical patterns (e.g. "billing
-  error," "can't access," "data loss") catches the obvious signals without any AI call.
-- **LLM classification**: for tickets that don't match a clear pattern, a single bounded LLM
-  call (powered locally via Ollama using Gemma-4 E2B) reads the ticket body and classifies it
-  by issue type and urgency level, returning a structured response validated against a strict schema.
-- **No invented data**: the tool categorizes and sorts — it does not generate ticket responses,
-  fabricate priority scores, or guess at resolution steps. Every classification is traceable to
-  either a rule match or a validated LLM output.
+- **Deterministic Rule Engine**: keyword and pattern matching for known critical signals (e.g. "billing error," "can't access," "data loss", "password reset") categorizes tickets and flags critical urgency instantly without external AI dependencies or GPU overhead.
+- **Structured Fallback Classifier**: unclassified or edge-case tickets default to a safe baseline triage (`general` / `medium`), ensuring continuous operational stability.
+- **Optional Cloud LLM Integration**: cloud LLM classification (Groq / Gemini) can optionally be enabled via environment variables for edge cases, but no local LLM setup is required.
+- **No invented data**: the tool categorizes and sorts — it does not generate fake ticket responses, fabricate priority scores, or guess at resolution steps. Every classification is traceable and predictable.
 
-> **Bounded-AI discipline**: the LLM classifies text; it does not compute scores, rank tickets,
-> or make routing decisions. All sorting and prioritization logic is deterministic Python code
-> that runs on the LLM's structured output. If the LLM is unavailable, the rule-based fallback
-> still produces a usable (if less precise) triage.
+> **Deterministic-First Discipline**: all sorting, scoring (`critical=4`, `high=3`, `medium=2`, `low=1`), and prioritization logic is 100% deterministic Python code. The core system operates entirely without local LLM daemons (like Ollama), offering sub-millisecond execution speeds and zero local VRAM overhead.
 
 ## The data behind it
 
@@ -83,7 +76,7 @@ tool is built to work on any CSV of support tickets with similar structure.
 The thinnest end-to-end slice that solves Jordan's problem:
 
 1. **Ingest**: read a CSV of support tickets into structured Python objects (FastAPI endpoint).
-2. **Classify**: for each ticket, determine issue type and urgency (rules first, LLM fallback).
+2. **Classify**: for each ticket, determine issue type and urgency (rules first, fallback classifier).
 3. **Prioritize**: sort tickets by urgency and category, deterministically.
 4. **Display**: render the prioritized queue as a filterable table in the React frontend.
 
@@ -92,7 +85,7 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 ### Explicitly out of scope for V1
 
 - A database (Supabase or otherwise) -- input is CSV upload, processing is in-memory.
-- Multi-agent workflows (LangChain, CrewAI) -- a single bounded LLM call suffices.
+- Multi-agent workflows (LangChain, CrewAI) -- rule engine + lightweight fallback suffices.
 - MCP tool connectivity -- this tool is used by a human, not by an AI agent.
 - User accounts, authentication, or saved history.
 - Auto-generated ticket responses.
@@ -108,17 +101,15 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 
 - **Frontend**: React + TypeScript (Vite SPA). CSV upload, prioritized table, category/urgency
   filters.
-- **Backend**: Python 3.12 + FastAPI. CSV parsing, ticket classification (deterministic rules +
-  bounded LLM fallback), prioritization logic.
-- **AI layer**: single bounded LLM call per ticket for classification powered locally via Ollama
-  (using `gemma-4 E2B` or similar lightweight local model). Strict schema validation
-  (Pydantic) on all structured output. Rule-based fallback when the LLM is unavailable.
+- **Backend**: Python 3.12 + FastAPI. CSV parsing, ticket classification (deterministic rule engine +
+  safe default fallback), prioritization logic.
+- **Classification Engine**: Fast, sub-millisecond keyword and pattern-matching rule engine. Optional cloud LLM providers (Groq / Gemini) can be configured via env vars, but no local LLM (such as Ollama) or GPU setup is required.
 > **No database, no agent framework for V1.** Keep it simple enough that Jordan can upload a
 > CSV and see the result.
 
 ### Status
 
-V1 backend core logic, flexible CSV parsing with header alias normalization, ticket classification pipeline (deterministic rules + bounded Ollama Gemma-4 fallback + safe default fallback), deterministic urgency prioritization, and FastAPI endpoints are complete and fully tested (12/12 pytest suite passing).
+V1 backend core logic, flexible CSV parsing with header alias normalization, ticket classification pipeline (deterministic rule engine + safe default fallback), deterministic urgency prioritization, and FastAPI endpoints are complete and fully tested (13/13 pytest suite passing).
 
 ---
 

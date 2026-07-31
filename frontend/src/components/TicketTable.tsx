@@ -87,9 +87,9 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     }
     if (norm.includes('llm') || norm.includes('gemma')) {
       return (
-        <span className="badge badge-source-llm" title="Triaged using Gemma 4 E2B AI model">
+        <span className="badge badge-source-llm" title="Triaged using LLM classification model">
           <Sparkles size={12} />
-          Gemma 4 E2B
+          LLM Classifier
         </span>
       );
     }

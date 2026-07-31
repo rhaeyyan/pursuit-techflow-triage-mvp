@@ -10,7 +10,7 @@ Data source for MVP: Kaggle open-source ticket dataset.
 
 ## MVP Stack (Walking Skeleton)
 - **Frontend:** React + TypeScript (Vite SPA). Jordan uploads a CSV, sees a prioritized/categorized table, filters by urgency or category.
-- **Backend:** Python 3.12 + FastAPI. Handles CSV parsing, ticket classification (rules + bounded LLM calls), and deterministic prioritization.
+- **Backend:** Python 3.12 + FastAPI. Handles CSV parsing, ticket classification (deterministic rule engine + fallback classifier), and deterministic prioritization.
 - **Agentic Layers:** None. No MCP, no LangChain, no CrewAI, no database.
 
 ## Configuration & Quality Gates

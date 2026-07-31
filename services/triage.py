@@ -3,8 +3,9 @@
 import csv
 import io
 import json
+import os
 import httpx
-from schemas import TicketInput, TicketClassification, TriagedTicket
+from schemas import TicketClassification, TicketInput, TriagedTicket
 
 URGENCY_SCORES = {
     "critical": 4,
@@ -50,18 +51,131 @@ class RuleEngine:
         return None
 
 
+class GroqClassifier:
+    """Groq LLM classifier fallback using gemma2-9b-it."""
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "gemma2-9b-it",
+        timeout: float = 3.0,
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+        self.endpoint = "https://api.groq.com/openai/v1/chat/completions"
+
+    def classify(self, ticket: TicketInput) -> TicketClassification | None:
+        api_key = self.api_key or os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return None
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        prompt = (
+            "Classify the following support ticket into an issue_type "
+            "(billing, technical, account, feature_request, general) and "
+            "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
+            f"Subject: {ticket.subject}\nBody: {ticket.body}"
+        )
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"},
+        }
+        try:
+            response = httpx.post(
+                self.endpoint, headers=headers, json=payload, timeout=self.timeout
+            )
+            if response.status_code != 200:
+                return None
+            data = response.json()
+            choices = data.get("choices", [])
+            if not choices:
+                return None
+            content = choices[0].get("message", {}).get("content")
+            if not content:
+                return None
+            if isinstance(content, str):
+                parsed = json.loads(content)
+            elif isinstance(content, dict):
+                parsed = content
+            else:
+                return None
+            return TicketClassification(**parsed)
+        except Exception:
+            return None
+
+
+class GeminiClassifier:
+    """Gemini LLM classifier fallback using gemini-2.5-flash."""
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "gemini-2.5-flash",
+        timeout: float = 3.0,
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+
+    def classify(self, ticket: TicketInput) -> TicketClassification | None:
+        api_key = self.api_key or os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return None
+        endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={api_key}"
+        prompt = (
+            "Classify the following support ticket into an issue_type "
+            "(billing, technical, account, feature_request, general) and "
+            "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
+            f"Subject: {ticket.subject}\nBody: {ticket.body}"
+        )
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"responseMimeType": "application/json"},
+        }
+        try:
+            response = httpx.post(endpoint, json=payload, timeout=self.timeout)
+            if response.status_code != 200:
+                return None
+            data = response.json()
+            candidates = data.get("candidates", [])
+            if not candidates:
+                return None
+            parts = candidates[0].get("content", {}).get("parts", [])
+            if not parts:
+                return None
+            raw_res = parts[0].get("text")
+            if not raw_res:
+                return None
+            if isinstance(raw_res, str):
+                parsed = json.loads(raw_res)
+            elif isinstance(raw_res, dict):
+                parsed = raw_res
+            else:
+                return None
+            return TicketClassification(**parsed)
+        except Exception:
+            return None
+
+
 class OllamaClassifier:
     """Ollama LLM classifier fallback."""
 
     def __init__(
         self,
-        endpoint: str = "http://localhost:11434/api/generate",
+        endpoint: str | None = None,
         timeout: float = 3.0,
     ):
         self.endpoint = endpoint
         self.timeout = timeout
 
     def classify(self, ticket: TicketInput) -> TicketClassification | None:
+        endpoint = self.endpoint or os.getenv(
+            "OLLAMA_ENDPOINT", "http://localhost:11434/api/generate"
+        )
         prompt = (
             "Classify the following support ticket into an issue_type "
             "(billing, technical, account, feature_request, general) and "
@@ -75,7 +189,7 @@ class OllamaClassifier:
             "stream": False,
         }
         try:
-            response = httpx.post(self.endpoint, json=payload, timeout=self.timeout)
+            response = httpx.post(endpoint, json=payload, timeout=self.timeout)
             if response.status_code != 200:
                 return None
             data = response.json()
@@ -102,19 +216,41 @@ class DefaultFallbackClassifier:
 
 def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
     rule_engine = RuleEngine()
+    groq_classifier = GroqClassifier()
+    gemini_classifier = GeminiClassifier()
     ollama_classifier = OllamaClassifier()
     fallback_classifier = DefaultFallbackClassifier()
 
     triaged: list[TriagedTicket] = []
 
     for ticket in tickets:
+        provider = os.getenv("LLM_PROVIDER", "auto").lower()
+        groq_key = os.getenv("GROQ_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+
+        # Step 1: Rule Engine
         classification = rule_engine.classify(ticket)
         confidence_source = "rule"
 
-        if classification is None:
-            classification = ollama_classifier.classify(ticket)
-            confidence_source = "llm"
+        # Step 2: If LLM_PROVIDER == "groq" or GROQ_API_KEY present -> GroqClassifier
+        if classification is None and (provider == "groq" or (provider == "auto" and groq_key)):
+            classification = groq_classifier.classify(ticket)
+            if classification is not None:
+                confidence_source = "llm"
 
+        # Step 3: If LLM_PROVIDER == "gemini" or GEMINI_API_KEY present -> GeminiClassifier
+        if classification is None and (provider == "gemini" or (provider == "auto" and gemini_key)):
+            classification = gemini_classifier.classify(ticket)
+            if classification is not None:
+                confidence_source = "llm"
+
+        # Step 4: If LLM_PROVIDER == "ollama" or LLM_PROVIDER == "auto" -> OllamaClassifier
+        if classification is None and provider in ("ollama", "auto"):
+            classification = ollama_classifier.classify(ticket)
+            if classification is not None:
+                confidence_source = "llm"
+
+        # Step 5: Default Fallback
         if classification is None:
             classification = fallback_classifier.classify(ticket)
             confidence_source = "fallback"
@@ -256,4 +392,3 @@ def parse_csv_tickets(content_bytes: bytes) -> list[TicketInput]:
         raise ValueError("CSV contains no valid ticket records")
 
     return tickets
-

@@ -99,18 +99,24 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 
 ### Stack
 
-- **Frontend**: React + TypeScript (Vite SPA). CSV upload, prioritized table, category/urgency
-  filters.
-- **Backend**: Python 3.12 + FastAPI. CSV parsing, ticket classification (deterministic rule engine +
-  safe default fallback), prioritization logic.
-- **Classification Engine**: Fast, sub-millisecond keyword and pattern-matching rule engine. Optional cloud LLM providers (Groq / Gemini) can be configured via env vars, but no local LLM (such as Ollama) or GPU setup is required.
-> **No database, no agent framework for V1.** Keep it simple enough that Jordan can upload a
-> CSV and see the result.
+- **Frontend**: React 18 + TypeScript (Vite SPA), Lucide icons, Vanilla CSS custom properties design system with light/dark theme support.
+- **Backend**: Python 3.12 + FastAPI. Flexible CSV parsing with header alias normalization, ticket classification pipeline (deterministic rule engine + safe fallback classifier), urgency prioritization logic.
+- **Classification Engine**: Fast, sub-millisecond keyword and pattern-matching rule engine. Optional cloud LLM providers (Groq / Gemini) can be configured via env vars without requiring local GPU setups.
 
 ### Status
 
-V1 backend core logic, flexible CSV parsing with header alias normalization, ticket classification pipeline (deterministic rule engine + safe default fallback), deterministic urgency prioritization, and FastAPI endpoints are complete and fully tested (13/13 pytest suite passing).
+**V1 Full-Stack MVP Complete & Verified.**
+
+- **Backend Core**: Flexible CSV parsing with header alias normalization, 4-tier urgency scoring (`critical=4`, `high=3`, `medium=2`, `low=1`), classification pipeline (deterministic rule engine + safe default fallback), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). 100% test coverage with 13/13 passing `pytest` suite.
+- **Frontend SPA**: Modern, corporate-friendly UI with:
+  - 🌗 **Light/Dark Theme System**: Warm corporate cream palette for light mode alongside polished dark mode with smooth theme transitions and `localStorage` persistence.
+  - 📥 **Batch CSV Upload & Drag-and-Drop**: Supports arbitrary CSV uploads, custom header alias mapping, and one-click demo data loading.
+  - 📋 **Prioritized Triage Table**: Ranked ticket queue sorted by urgency score, live search, issue category filtering, expandable ticket body previews, and column sorting.
+  - 💡 **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
+  - 🗑️ **Queue Management**: One-click queue reset to return to clean upload state.
+- **Demo Datasets**: Includes Kaggle support ticket benchmark dataset (10 tickets) and a scalable 138-ticket sample CSV (`data/sample_138_tickets.csv`) for demonstration.
 
 ---
 
-*Built for the Pursuit AI Native Fellowship.*
+*Built for Pursuit's AI-Native Fellowship.*
+[GitHub Repository](https://github.com/rhaeyyan/pursuit-techflow-triage-mvp) • [rayankhan.io](https://rayankhan.io) • [LinkedIn](https://www.linkedin.com/in/rayan-khan-3b90a2356/)

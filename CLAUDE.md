@@ -5,8 +5,8 @@ This assignment is to build a ticket management tool for Jordan M., a Support Sp
 Data source for MVP: Kaggle open-source ticket dataset.
 
 **References:**
-- Source guidelines: [`documents/20260716_Role categories_1.md`](file:///home/rayan/Documents/Python-Projects/techflow-support-queue/documents/20260716_Role%20categories_1.md)
-- Role context & email from Jordan M.: [`documents/20260716_Role categories_2.md`](file:///home/rayan/Documents/Python-Projects/techflow-support-queue/documents/20260716_Role%20categories_2.md)
+- Source guidelines: [`docs/20260716_Role categories_1.md`](file:///home/rayan/Documents/Python-Projects/techflow-support-queue/docs/20260716_Role%20categories_1.md)
+- Role context & email from Jordan M.: [`docs/20260716_Role categories_2.md`](file:///home/rayan/Documents/Python-Projects/techflow-support-queue/docs/20260716_Role%20categories_2.md)
 
 ## MVP Stack (Walking Skeleton)
 - **Frontend:** React + TypeScript (Vite SPA). Jordan uploads a CSV, sees a prioritized/categorized table, filters by urgency or category.

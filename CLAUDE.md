@@ -1,5 +1,7 @@
 # TechFlow Support Queue Tool — Agent Operating Manual
 
+> **Target Assistants:** Dual-compatible operating manual for **Claude Code** (`CLAUDE.md`) and **Gemini / Antigravity CLI** (`GEMINI.md`).
+
 ## Project Context
 This assignment is to build a ticket management tool for Jordan M., a Support Specialist at TechFlow. The tool will help process 200-300 weekly support tickets by automatically reading, categorizing, and prioritizing them so the support team can move from manual triaging to direct resolution.
 Data source for MVP: Kaggle open-source ticket dataset.
@@ -24,9 +26,11 @@ Data source for MVP: Kaggle open-source ticket dataset.
 - **Assessment**: None — first-party code, no live creds/PII. 
 - **Rationale**: The assignment processes open-source Kaggle data for a fictional company prototype. No real user PII or live production credentials are in scope at this stage.
 
-### Test-Quality Gates
-- **Gate**: TDD PostToolUse Hook (New source files flagged if no sibling test file).
-- **Rationale**: Reinforces Rule 4's Behavioral/Integration test-first ordering mechanically for L1 MVPs.
+### Quality & Lifecycle Hooks
+- **Hooks Location**: Supported under `.claude/hooks/` and `.gemini/hooks/`.
+- **PreToolUse Hook**: Prevents unapproved `Co-Authored-By` commit trailers (`block-ai-coauthor.sh`).
+- **PostToolUse Hook**: TDD gate & instant linting (`post-edit-lint.sh`). Flags new source files lacking sibling tests.
+- **Stop Hook**: Enforces verification oracle execution before completion (`stop-oracle-check.sh`).
 
 ## Build/Test/Run Commands
 - **Install Backend**: `pip install -r requirements.txt`
@@ -42,14 +46,14 @@ An **oracle** is the specific environment in which a failure is observable. It i
 - Cypress FAILs any bug-fix task that leaves no assertion.
 
 ## The Orchestrator (the main session)
-Subagents cannot invoke other subagents — every arrow in the pipeline is the main session relaying a handoff block between two agents that otherwise share no context. The main session therefore owns:
+Subagents cannot invoke other subagents — every arrow in the pipeline is the main session relaying a handoff block between two agents that otherwise share no context. Subagent profiles are stored in `.claude/agents/` and `.gemini/agents/` (or dispatched via `invoke_subagent`). The main session therefore owns:
 - **Persisting the SPEC, then relaying its *path*.** Write every approved `[SPEC]`/`[SPIKE]` to `specs/NNN-slug.md` **first**, then dispatch by citing that path. Relay short blocks (`[COMPLIANCE-REPORT]`, `[COMPLETION-REPORT]`) inline and verbatim.
 - **Counting the rejection loop.** Subagents are stateless; the main session tracks retries before escalating to Banyan (Workflow Rule 9).
-- **Retry via continuation, not respawn.** When Cypress fails a builder, continue that same agent.
+- **Retry via continuation, not respawn.** When Cypress fails a builder, continue that same agent context.
 - **Worktree isolation.** Spawning the builder agent with worktree isolation for that task.
 
-## Team Roster (`.claude/agents/`)
-Every workflow has one definitive owner. Tool restrictions are enforced by each agent's frontmatter.
+## Team Roster (`.claude/agents/` & `.gemini/agents/`)
+Every workflow has one definitive owner. Tool restrictions are enforced by each agent's frontmatter definition in `.claude/agents/` and `.gemini/agents/`.
 
 **Default roster** (in the path for most tasks):
 | Agent | Role / Title | May edit files? | Job |
@@ -67,12 +71,12 @@ Every workflow has one definitive owner. Tool restrictions are enforced by each 
 | `banyan` | Platform Engineer / Reviewer | Yes (refactors only) | Coupling/bloat smell, tree-wide refactor, or a stalled rejection loop |
 
 ## Workflow Rules
-1. **Plan before building.** Non-trivial features start with a Cedar `[SPEC]`. Cedar rejects ambiguous goals and recommends `/grill-me`. The human approves the plan before code is written.
+1. **Plan before building.** Non-trivial features start with a Cedar `[SPEC]`. Cedar rejects ambiguous goals and recommends `/grill-me` or `/plan`. The human approves the plan before code is written.
 2. **Intake & routing by failure mode.** INVARIANT (silent failure) → Cedar `[SPEC]`; OBSERVABLE (visible on sight) → straight to Magnolia/Redwood; UNKNOWN (no oracle yet) → Cedar `[SPIKE]`.
 3. **Red in the oracle before green.** Every `[SPEC]` declares a `Verification Oracle`; Cypress produces the failure *there* before a builder starts. Prefer behavioral/black-box assertions.
 4. **Task granularity.** No task modifies more than 5 files. Cedar splits anything bigger and limits SPEC references to 3 items. High-risk ops run a dry-run rehearsal first.
 5. **Walking skeleton first.** Thinnest end-to-end slice, then grow. No big-bang builds.
-6. **Context diet.** Read only what the task needs. Birch retrieves via ripgrep + AST/LSP.
+6. **Context diet.** Read only what the task needs. Birch retrieves via ripgrep (`rg`) / AST / file search tools.
 7. **Patterns are earned.** Apply a GoF pattern only when variance analysis shows real variation. Default force: `Simplicity > Pattern purity`.
 8. **Dependency authority.** Only Cedar authorizes new PIP/NPM deps. Redwood/Magnolia halt and request a `[SPEC]` update — no shadow IT.
 9. **Rejection loop (circuit breaker).** Cypress FAIL → developer retries. **Max 2 cycles**, then escalate to Banyan; only then to the human.
@@ -82,6 +86,7 @@ Every workflow has one definitive owner. Tool restrictions are enforced by each 
 ### Bounded AI (the core discipline)
 - **Compute deterministically, summarize generatively.** Do not let an LLM do raw math or data ranking if code can do it. Use LLMs strictly for text classification/extraction.
 - Enforce strict schema validation (Zod/Pydantic) on structured LLM output (e.g. ticket categorizations).
+- Format file references using standard `file:///` URI syntax for cross-client compatibility.
 
 ### Security (Zero-Trust)
 - No secrets/API keys/PII in LLM context or commits. Env vars only; `.gitignore` covers `.env*`.
@@ -138,4 +143,4 @@ Every inter-agent handoff uses one of these blocks, verbatim.
 - **Never its own commit.** Fold the ledger edit into the code commit it describes.
 - **Durable facts belong in durable places.** A root cause worth remembering becomes an assertion in the oracle; a decision becomes a line in a `[SPEC]`. The ledger is for *in-flight* state only.
 - **Record verification in the commit, not in prose.** Add a `Verified-With:` trailer naming the oracle that was run.
-- Treat `SESSION_STATE.md` as episodic memory; the repo (`src/`, `tests/`, `.claude/agents/`, the data) is the source of truth. Where a doc and a test disagree, **the test wins.**
+- Treat `SESSION_STATE.md` as episodic memory; the repo (`src/`, `tests/`, `.claude/agents/`, `.gemini/agents/`, the data) is the source of truth. Where a doc and a test disagree, **the test wins.**

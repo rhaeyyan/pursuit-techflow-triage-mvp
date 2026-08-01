@@ -77,6 +77,15 @@ customer satisfaction scores.
 This is a learning exercise — TechFlow is a fictional company — but the data is real and the
 tool is built to work on any CSV of support tickets with similar structure.
 
+## Industry Case Study Reference & Influences
+
+TechFlow Support Queue's architecture incorporates core insights from the industry case study **[karolzak/support-tickets-classification](https://github.com/karolzak/support-tickets-classification)** (developed in collaboration with Microsoft Commercial Software Engineering and Endava):
+
+- **Deterministic PII Anonymization**: Implemented automated PII scrubbing ([`services/anonymizer.py`](file:///home/rayan/Documents/Python-Projects/techflow-support-queue/services/anonymizer.py)) to redact emails (`[EMAIL_REDACTED]`), IP addresses (`[IP_REDACTED]`), credit cards (`[CARD_REDACTED]`), and API keys before sending ticket text to external AI models or rendering.
+- **Hierarchical Two-Tier Taxonomy**: Structured tickets into primary issue types (`technical`, `billing`, `account`) and granular sub-categories (`database_outage`, `server_crash`, `network`, `payment_gateway`, `auth_security`).
+- **Multi-Label Domain Tagging**: Added cross-domain tag extraction (`#database`, `#infrastructure`, `#security`) to capture multi-system incident dependencies.
+- **Unsupervised Trend & Topic Spike Detection**: Integrated n-gram topic clustering ([`services/trends.py`](file:///home/rayan/Documents/Python-Projects/techflow-support-queue/services/trends.py)) to detect emerging complaint spikes (*e.g., "Database Deadlock" (18%)*) across incoming ticket batches.
+
 ## Try it
 
 **Live Demo**: [https://pursuit-techflow-triage-mvp.vercel.app/](https://pursuit-techflow-triage-mvp.vercel.app/)

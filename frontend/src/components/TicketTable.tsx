@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TriagedTicket } from '../types';
-import { ChevronDown, ChevronUp, Copy, Check, Sparkles, Cpu, Shield, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Sparkles, Cpu, Shield, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock } from 'lucide-react';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
 
@@ -16,6 +16,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
   // Persistence & Edit state
   const [savedStatuses, setSavedStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
   const [savedAssignees, setSavedAssignees] = useState<Record<string, string | null>>({});
+  const [savedUpdatedAts, setSavedUpdatedAts] = useState<Record<string, string>>({});
   const [pendingStatuses, setPendingStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
   const [pendingAssignees, setPendingAssignees] = useState<Record<string, string | null>>({});
 
@@ -62,6 +63,12 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     return ticket.assignee || null;
   };
 
+  const getEffectiveUpdatedAt = (ticket: TriagedTicket): string | null => {
+    const tId = ticket.ticket_id;
+    if (savedUpdatedAts[tId]) return savedUpdatedAts[tId];
+    return ticket.updated_at || null;
+  };
+
   const hasUnsavedChanges = (ticket: TriagedTicket): boolean => {
     const tId = ticket.ticket_id;
     const currentStatus = getEffectiveStatus(ticket);
@@ -78,17 +85,28 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     const tId = ticket.ticket_id;
     const newStatus = getEffectiveStatus(ticket);
     const newAssignee = getEffectiveAssignee(ticket);
+    const nowIso = new Date().toISOString();
 
     setSavingIds((prev) => new Set(prev).add(tId));
 
     try {
-      await fetch(`${API_BASE_URL}/api/tickets/${tId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tickets/${tId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, assignee: newAssignee }),
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.updated_at) {
+          setSavedUpdatedAts((prev) => ({ ...prev, [tId]: data.updated_at }));
+        } else {
+          setSavedUpdatedAts((prev) => ({ ...prev, [tId]: nowIso }));
+        }
+      } else {
+        setSavedUpdatedAts((prev) => ({ ...prev, [tId]: nowIso }));
+      }
     } catch {
-      // Gracefully persist state locally if offline
+      setSavedUpdatedAts((prev) => ({ ...prev, [tId]: nowIso }));
     } finally {
       setSavedStatuses((prev) => ({ ...prev, [tId]: newStatus }));
       setSavedAssignees((prev) => ({ ...prev, [tId]: newAssignee }));
@@ -603,7 +621,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                       {renderConfidenceBadge(ticket.confidence_source, index < 2)}
                     </td>
 
-                    {/* Date */}
+                    {/* Date & Last Updated */}
                     <td
                       style={{
                         padding: '14px 16px',
@@ -611,7 +629,23 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                         color: 'var(--text-secondary)',
                       }}
                     >
-                      {formatDate(ticket.created_at)}
+                      <div>{formatDate(ticket.created_at)}</div>
+                      {getEffectiveUpdatedAt(ticket) && (
+                        <div
+                          style={{
+                            fontSize: '0.675rem',
+                            color: 'var(--accent-primary)',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            marginTop: '2px',
+                          }}
+                          title={`Last modified: ${formatDate(getEffectiveUpdatedAt(ticket))}`}
+                        >
+                          <Clock size={10} /> {formatDate(getEffectiveUpdatedAt(ticket))}
+                        </div>
+                      )}
                     </td>
 
                     {/* Expand */}
@@ -722,6 +756,15 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                                     <option value="Dana">Dana R.</option>
                                   </select>
                                 </span>
+
+                                {getEffectiveUpdatedAt(ticket) && (
+                                  <span>
+                                    Updated:{' '}
+                                    <strong style={{ color: 'var(--accent-primary)' }}>
+                                      {formatDate(getEffectiveUpdatedAt(ticket))}
+                                    </strong>
+                                  </span>
+                                )}
                               </div>
 
                               {/* Full Triage Reasons Breakdown */}

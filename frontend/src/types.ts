@@ -20,6 +20,7 @@ export interface TriagedTicket {
   reasons?: string[]; // Explainable triage reasons/signals
   status?: 'new' | 'in-progress' | 'escalated' | 'resolved';
   assignee?: string | null;
+  updated_at?: string | null;
   confidence_source: ConfidenceSource | string;
 }
 

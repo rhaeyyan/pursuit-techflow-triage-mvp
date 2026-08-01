@@ -17,6 +17,7 @@ export const DEMO_TICKETS: TriagedTicket[] = [
     reasons: ['Technical issue', 'Possible data loss or outage', 'Customer flagged as urgent', 'Live phone — customer is waiting'],
     status: 'escalated',
     assignee: 'Jordan',
+    updated_at: '2026-07-30T22:10:00Z',
     confidence_source: 'rule',
   },
   {
@@ -35,6 +36,7 @@ export const DEMO_TICKETS: TriagedTicket[] = [
     reasons: ['Account request', 'Legal escalation risk', 'Customer flagged as urgent', 'Live chat — customer is waiting'],
     status: 'in-progress',
     assignee: 'Priya',
+    updated_at: '2026-07-30T21:45:00Z',
     confidence_source: 'llm',
   },
   {

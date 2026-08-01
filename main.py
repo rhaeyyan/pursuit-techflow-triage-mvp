@@ -4,7 +4,7 @@ from collections import Counter
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from schemas import TriageResponse, GenerateResponseRequest, GenerateResponseOutput, UpdateTicketRequest
+from schemas import TriageResponse, GenerateResponseRequest, GenerateResponseOutput, UpdateTicketRequest, TriagedTicket
 from services.triage import parse_csv_tickets, triage_tickets, generate_ticket_response
 
 app = FastAPI(title="TechFlow Support Queue API")
@@ -74,6 +74,9 @@ def generate_response_endpoint(request: GenerateResponseRequest):
         raise HTTPException(status_code=500, detail=f"Failed to generate response: {err}")
 
 
+from services.trends import detect_emerging_topics
+
+
 @app.patch("/api/tickets/{ticket_id}")
 def update_ticket_endpoint(ticket_id: str, request: UpdateTicketRequest):
     return {
@@ -82,5 +85,11 @@ def update_ticket_endpoint(ticket_id: str, request: UpdateTicketRequest):
         "updated_fields": request.model_dump(exclude_unset=True),
         "message": f"Successfully updated ticket {ticket_id}",
     }
+
+
+@app.post("/api/tickets/trends")
+def detect_trends_endpoint(tickets: list[TriagedTicket]):
+    trends = detect_emerging_topics(tickets)
+    return {"trends": trends, "total_clusters": len(trends)}
 
 

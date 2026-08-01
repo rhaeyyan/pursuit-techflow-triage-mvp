@@ -40,6 +40,7 @@ Given a batch of incoming support tickets (as a CSV upload), TechFlow Support Qu
 4. **Categorizes everything** so the team can route tickets to the right person without reading
    each one first.
 5. **Drafts AI customer responses** -- enables specialists to generate, review, and copy AI-driven or template-backed email response drafts for any ticket with one click.
+6. **Assigns Workflow Status & Specialists** -- tracks ticket progress (`New`, `In Progress`, `Escalated`, `Resolved`) and lets team leads assign tickets to specialists (*Jordan M.*, *Priya S.*, *Marcus K.*, *Dana R.*).
 
 ![Batch CSV Ingestion & Urgency Overview](screenshot/Dashboard.png)
 
@@ -53,12 +54,15 @@ Filters let Jordan drill into a specific category or urgency level.
 
 The tool uses a high-performance deterministic triage engine for ticket classification and prioritization:
 
+- **Multi-Factor 0-100 Priority Scoring Engine**: calculates a continuous priority score ($0 \to 100$) based on base urgency, channel impact, churn risk, legal escalation risk, data loss risk, and financial/refund indicators.
+- **Explainable Triage Signals & Risk Badges**: surfaces explicit reasoning tags for every ticket (e.g. *Churn risk (mentions cancelling)*, *Live phone — customer is waiting*, *Legal escalation risk*, *Possible data loss or outage*, *Money owed / refund risk*).
+- **Channel-Aware Risk Weighting**: automatically boosts priority for live channels (*Phone / Chat = +12/+10*) and public channels (*Social Media = +10 reputational risk*).
 - **Deterministic Rule Engine**: keyword and pattern matching for known critical signals (e.g. "billing error," "can't access," "data loss", "password reset") categorizes tickets and flags critical urgency instantly without external AI dependencies or GPU overhead.
 - **Structured Fallback Classifier**: unclassified or edge-case tickets default to a safe baseline triage (`general` / `medium`), ensuring continuous operational stability.
 - **Optional Cloud LLM Integration**: cloud LLM classification (Groq / Gemini) can optionally be enabled via environment variables for edge cases, but no local LLM setup is required.
 - **No invented data**: the tool categorizes and sorts — it does not generate fake ticket responses, fabricate priority scores, or guess at resolution steps. Every classification is traceable and predictable.
 
-> **Deterministic-First Discipline**: all sorting, scoring (`critical=4`, `high=3`, `medium=2`, `low=1`), and prioritization logic is 100% deterministic Python code. The core system operates entirely without local LLM daemons (like Ollama), offering sub-millisecond execution speeds and zero local VRAM overhead.
+> **Deterministic-First Discipline**: all sorting, multi-factor scoring ($0 \to 100$), and prioritization logic is 100% deterministic Python code. The core system operates entirely without local LLM daemons (like Ollama), offering sub-millisecond execution speeds and zero local VRAM overhead.
 
 ## The data behind it
 
@@ -168,11 +172,13 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 
 **V1 Full-Stack MVP Complete & Verified.**
 
-- **Backend Core**: Flexible CSV parsing with header alias normalization, 4-tier urgency scoring (`critical=4`, `high=3`, `medium=2`, `low=1`), classification pipeline (deterministic rule engine + safe default fallback), AI customer response draft generator (`/api/tickets/generate-response`), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). 100% test coverage with 15/15 passing `pytest` suite.
+- **Backend Core**: Flexible CSV parsing with header alias normalization, multi-factor $0–100$ priority scoring algorithm, channel risk weighting, explainable triage reason extraction, classification pipeline (deterministic rule engine + safe default fallback), AI customer response draft generator (`/api/tickets/generate-response`), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). 100% test coverage with 15/15 passing `pytest` suite.
 - **Frontend SPA**: Modern, corporate-friendly UI with:
   - **Light/Dark Theme System**: Warm corporate cream palette for light mode alongside polished dark mode with smooth theme transitions and `localStorage` persistence.
   - **Batch CSV Upload & Drag-and-Drop**: Supports arbitrary CSV uploads, custom header alias mapping, and one-click demo data loading.
-  - **Prioritized Triage Table**: Ranked ticket queue sorted by urgency score, live search, issue category filtering, expandable ticket body previews, and column sorting.
+  - **Prioritized Triage Table**: Ranked ticket queue sorted by $0–100$ priority score, live search, issue category filtering, expandable ticket body previews, and column sorting.
+  - **Explainable Triage Badges**: Surfaces explicit reasoning tags (*Churn risk*, *Live phone*, *Legal escalation risk*, *Refund risk*, *Data loss*).
+  - **Workflow Management**: Interactive status badges (`New`, `In Progress`, `Escalated`, `Resolved`) and specialist assignment controls (*Jordan M.*, *Priya S.*, *Marcus K.*, *Dana R.*).
   - **AI-Assisted Draft Responses**: On-demand AI draft response generation inside expanded ticket views with one-click copy functionality.
   - **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
   - **Queue Management**: One-click queue reset to return to clean upload state.

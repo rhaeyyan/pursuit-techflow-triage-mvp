@@ -86,12 +86,11 @@ The diagram below illustrates the end-to-end execution flow of TechFlow Support 
 
 ```mermaid
 flowchart TD
-    UserCSV["Customer Support Tickets (CSV Upload)"] --> CSVParser["CSV Header Normalization & Ingestion"]
+    UserCSV["Customer Support Tickets (CSV Upload)"] --> CSVParser
 
     subgraph Deterministic_Engine ["DETERMINISTIC TRIAGE ENGINE (Python Backend - Sub-Millisecond)"]
-        CSVParser --> RuleEngineCheck{"Match Keyword Rules?"}
+        CSVParser["CSV Header Normalization & Ingestion"] --> RuleEngineCheck{"Match Keyword Rules?"}
         RuleEngineCheck -- "YES (e.g., 'billing error', 'outage')" --> RuleResult["Rule Engine Classification<br/>(Urgency: 1-4, Category)"]
-        
         RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Provider / API Key Configured?"}
         
         CheckLLMConfig -- "NO / Offline" --> DefaultFallback["Safe Default Fallback<br/>(Category: general, Urgency: medium)"]
@@ -101,17 +100,18 @@ flowchart TD
         LLMClassResult --> PrioritySort
 
         PrioritySort --> RenderUI["React SPA Prioritized Queue Table & Filters"]
+        
+        CheckDraftLLM{"LLM API Key Active?"} -- "NO" --> TemplateDraft["Smart Template Response Generator<br/>(Interpolates Ticket Metadata)"]
     end
 
     subgraph AI_LLM_Domain ["OPTIONAL AI / LLM CLOUD DOMAIN (Groq Gemma-2-9B / Gemini 2.5 Flash)"]
         CheckLLMConfig -- "YES (Groq / Gemini)" --> LLMClassifyCall["Call Cloud LLM API for Ticket Classification"]
         LLMClassifyCall --> LLMClassResult["LLM Structured JSON Classification"]
         
-        RenderUI -- "User Clicks 'Generate Draft'" --> CheckDraftLLM{"LLM API Key Active?"}
         CheckDraftLLM -- "YES" --> LLMResponseGen["Generate AI Customer Email Draft<br/>(Groq Gemma / Gemini Flash)"]
     end
 
-    CheckDraftLLM -- "NO" --> TemplateDraft["Smart Template Response Generator<br/>(Interpolates Ticket Metadata)"]
+    RenderUI -- "User Clicks 'Generate Draft'" --> CheckDraftLLM
     
     LLMResponseGen --> DisplayDraft["Customer Response Draft (Copy & Edit Interface)"]
     TemplateDraft --> DisplayDraft

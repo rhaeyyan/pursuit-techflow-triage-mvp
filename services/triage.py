@@ -21,35 +21,49 @@ class RuleEngine:
 
     RULES = [
         # Billing
-        (["billing error", "double charged", "unauthorized charge"], "billing", "critical"),
-        (["refund", "invoice", "payment failed", "credit card"], "billing", "high"),
+        (["billing error", "double charged", "unauthorized charge"], "billing", "payment_gateway", "critical"),
+        (["refund", "invoice", "payment failed", "credit card"], "billing", "invoice_refund", "high"),
         # Technical
-        (
-            [
-                "can't access",
-                "data loss",
-                "500 error",
-                "server down",
-                "system crash",
-                "system outage",
-                "outage",
-            ],
-            "technical",
-            "critical",
-        ),
-        (["bug"], "technical", "high"),
-        # Account
-        (["password reset", "account locked"], "account", "medium"),
-        (["change email"], "account", "low"),
+        (["data loss", "database failure", "db crash"], "technical", "database_outage", "critical"),
+        (["server down", "system crash", "system outage", "500 error"], "technical", "server_crash", "critical"),
+        (["latency", "slow load", "network error", "dns"], "technical", "network", "high"),
+        (["bug", "error code"], "technical", "software_bug", "high"),
+        # Account & Security
+        (["password reset", "account locked", "2fa", "security breach"], "account", "auth_security", "medium"),
+        (["change email", "update profile"], "account", "user_maintenance", "low"),
+        # Feature Request
+        (["feature request", "integration", "add support"], "feature_request", "product_roadmap", "low"),
     ]
 
     def classify(self, ticket: TicketInput) -> TicketClassification | None:
         text = f"{ticket.subject} {ticket.body}".lower()
-        for keywords, issue_type, urgency in self.RULES:
+        for keywords, issue_type, sub_category, urgency in self.RULES:
             for kw in keywords:
                 if kw in text:
-                    return TicketClassification(issue_type=issue_type, urgency=urgency)
+                    return TicketClassification(issue_type=issue_type, sub_category=sub_category, urgency=urgency)
         return None
+
+
+def extract_multi_label_tags(ticket: TicketInput, issue_type: str, sub_category: str) -> list[str]:
+    tags: set[str] = set()
+    if issue_type:
+        tags.add(issue_type)
+    if sub_category and sub_category != "general":
+        tags.add(sub_category)
+
+    text = f"{ticket.subject} {ticket.body}".lower()
+    if any(k in text for k in ["db", "database", "sql", "postgres", "redis"]):
+        tags.add("database")
+    if any(k in text for k in ["network", "dns", "gateway", "latency", "timeout"]):
+        tags.add("network")
+    if any(k in text for k in ["invoice", "charge", "refund", "billing", "payment"]):
+        tags.add("billing")
+    if any(k in text for k in ["security", "auth", "password", "token", "breach"]):
+        tags.add("security")
+    if any(k in text for k in ["server", "cluster", "outage", "crash"]):
+        tags.add("infrastructure")
+
+    return sorted(list(tags))
 
 
 class GroqClassifier:
@@ -358,6 +372,9 @@ def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
             ticket, classification.issue_type, classification.urgency, confidence_source
         )
 
+        sub_cat = getattr(classification, "sub_category", "general")
+        tags = extract_multi_label_tags(ticket, classification.issue_type, sub_cat)
+
         triaged.append(
             TriagedTicket(
                 ticket_id=ticket.ticket_id,
@@ -367,6 +384,8 @@ def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
                 channel=ticket.channel,
                 created_at=ticket.created_at,
                 issue_type=classification.issue_type,
+                sub_category=sub_cat,
+                tags=tags,
                 urgency=classification.urgency,
                 urgency_score=score_tier,
                 score=score,

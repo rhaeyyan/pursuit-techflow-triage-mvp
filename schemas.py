@@ -16,6 +16,7 @@ class TicketInput(BaseModel):
 
 class TicketClassification(BaseModel):
     issue_type: Literal["billing", "technical", "account", "feature_request", "general"]
+    sub_category: str = "general"
     urgency: Literal["critical", "high", "medium", "low"]
 
 
@@ -27,6 +28,8 @@ class TriagedTicket(BaseModel):
     channel: str | None = None
     created_at: datetime | str | None = None
     issue_type: str
+    sub_category: str = "general"
+    tags: list[str] = Field(default_factory=list)
     urgency: str
     urgency_score: int = Field(ge=1, le=4)
     score: int = Field(default=50, ge=0, le=100)

@@ -80,8 +80,8 @@ def test_rule_engine_returns_none_when_no_match():
     rule_engine = RuleEngine()
     ticket = TicketInput(
         ticket_id="TICK-004",
-        subject="Feature request: dark mode",
-        body="It would be nice to have a dark theme option in settings.",
+        subject="General question about operating hours",
+        body="What are the customer support operating hours during holidays?",
     )
     result = rule_engine.classify(ticket)
     
@@ -332,7 +332,7 @@ def test_cloud_llm_provider_fallback(monkeypatch):
     """Test triage service supports cloud LLM providers (Groq / Gemini) via env vars."""
     ticket = TicketInput(
         ticket_id="TICK-CLOUD-001",
-        subject="Cloud integration inquiry",
+        subject="Cloud deployment questions",
         body="Asking about API rate limits for cloud setup.",
     )
 

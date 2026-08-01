@@ -334,6 +334,22 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     return map[issueType.toLowerCase()] || issueType;
   };
 
+  const formatSubCategory = (subCat?: string) => {
+    if (!subCat || subCat === 'general') return null;
+    const map: Record<string, string> = {
+      database_outage: 'Database',
+      server_crash: 'Server Crash',
+      network: 'Network',
+      software_bug: 'Software Bug',
+      payment_gateway: 'Payment Gateway',
+      invoice_refund: 'Invoice Refund',
+      auth_security: 'Security & Auth',
+      user_maintenance: 'User Maintenance',
+      product_roadmap: 'Product Roadmap',
+    };
+    return map[subCat.toLowerCase()] || subCat.replace('_', ' ');
+  };
+
   const sortedTickets = [...tickets].sort((a, b) => {
     if (sortField === 'date') {
       const dA = new Date(a.created_at || 0).getTime();
@@ -565,9 +581,16 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                       )}
                     </td>
 
-                    {/* Category */}
+                    {/* Category & Sub-Category */}
                     <td style={{ padding: '14px 16px' }}>
-                      <span className="badge badge-category">{formatIssueType(ticket.issue_type)}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span className="badge badge-category">{formatIssueType(ticket.issue_type)}</span>
+                        {formatSubCategory(ticket.sub_category) && (
+                          <span style={{ fontSize: '0.675rem', color: 'var(--text-muted)', fontWeight: 600, paddingLeft: '2px' }}>
+                            ↳ {formatSubCategory(ticket.sub_category)}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Status Pill */}
@@ -716,6 +739,22 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                                         </span>
                                       );
                                     })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Multi-Label Domain Tags */}
+                              {ticket.tags && ticket.tags.length > 0 && (
+                                <div style={{ marginTop: '8px' }}>
+                                  <span style={{ fontSize: '0.675rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                                    Domain Tags:
+                                  </span>
+                                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                    {ticket.tags.map((tag, tIdx) => (
+                                      <span key={tIdx} className="reason-tag" style={{ fontSize: '0.675rem', opacity: 0.85, background: 'var(--bg-card)' }}>
+                                        #{tag}
+                                      </span>
+                                    ))}
                                   </div>
                                 </div>
                               )}

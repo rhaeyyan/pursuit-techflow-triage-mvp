@@ -12,6 +12,8 @@ export interface TriagedTicket {
   channel?: string | null;
   created_at?: string | null;
   issue_type: IssueType | string;
+  sub_category?: string;
+  tags?: string[];
   urgency: UrgencyLevel;
   urgency_score: number; // 4: critical, 3: high, 2: medium, 1: low
   score?: number; // 0 to 100 numerical urgency score

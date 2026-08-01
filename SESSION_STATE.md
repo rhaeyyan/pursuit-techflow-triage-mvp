@@ -1,3 +1,8 @@
+## Session: 2026-07-31 23:56 EDT
+- **Shipped**: Banyan tree-wide refactor — Template Method consolidation of Groq/Gemini/Ollama classifiers in `services/triage.py`; decomposed the 1002-line `TicketTable.tsx` God Component into `hooks/useTicketEdits.ts` + `lib/{ticketsApi,fallbackResponseTemplate,ticketFormatters}`. Renamed demo specialist roster (Priya S./Marcus K./Dana R. → Sofia R./Miguel T./Aisha B.). Added a minimal Playwright e2e oracle (`frontend/e2e/`, `npm run e2e` / `e2e:mobile`) to satisfy `stop-oracle-check.sh`, which had no prior automated frontend oracle to run.
+- **Blocked**: None.
+- **Next Step**: No unit-level frontend tests exist yet (no vitest/RTL) — the new Playwright spec covers only the ticket-table save/draft flow end-to-end.
+
 ## Session: 2026-07-31 11:40 EDT
 - **Shipped**: Updated `CLAUDE.md` / `GEMINI.md` for Gemini & Claude dual-compatibility (hooks, agents, slash commands); updated `.claude/settings.json`. Committed (`805375c`) and pushed to `main`.
 - **Blocked**: None.

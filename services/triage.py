@@ -21,18 +21,53 @@ class RuleEngine:
 
     RULES = [
         # Billing
-        (["billing error", "double charged", "unauthorized charge"], "billing", "payment_gateway", "critical"),
-        (["refund", "invoice", "payment failed", "credit card"], "billing", "invoice_refund", "high"),
+        (
+            ["billing error", "double charged", "unauthorized charge"],
+            "billing",
+            "payment_gateway",
+            "critical",
+        ),
+        (
+            ["refund", "invoice", "payment failed", "credit card"],
+            "billing",
+            "invoice_refund",
+            "high",
+        ),
         # Technical
-        (["data loss", "database failure", "db crash"], "technical", "database_outage", "critical"),
-        (["server down", "system crash", "system outage", "500 error"], "technical", "server_crash", "critical"),
-        (["latency", "slow load", "network error", "dns"], "technical", "network", "high"),
+        (
+            ["data loss", "database failure", "db crash"],
+            "technical",
+            "database_outage",
+            "critical",
+        ),
+        (
+            ["server down", "system crash", "system outage", "500 error"],
+            "technical",
+            "server_crash",
+            "critical",
+        ),
+        (
+            ["latency", "slow load", "network error", "dns"],
+            "technical",
+            "network",
+            "high",
+        ),
         (["bug", "error code"], "technical", "software_bug", "high"),
         # Account & Security
-        (["password reset", "account locked", "2fa", "security breach"], "account", "auth_security", "medium"),
+        (
+            ["password reset", "account locked", "2fa", "security breach"],
+            "account",
+            "auth_security",
+            "medium",
+        ),
         (["change email", "update profile"], "account", "user_maintenance", "low"),
         # Feature Request
-        (["feature request", "integration", "add support"], "feature_request", "product_roadmap", "low"),
+        (
+            ["feature request", "integration", "add support"],
+            "feature_request",
+            "product_roadmap",
+            "low",
+        ),
     ]
 
     def classify(self, ticket: TicketInput) -> TicketClassification | None:
@@ -40,11 +75,17 @@ class RuleEngine:
         for keywords, issue_type, sub_category, urgency in self.RULES:
             for kw in keywords:
                 if kw in text:
-                    return TicketClassification(issue_type=issue_type, sub_category=sub_category, urgency=urgency)
+                    return TicketClassification(
+                        issue_type=issue_type,
+                        sub_category=sub_category,
+                        urgency=urgency,
+                    )
         return None
 
 
-def extract_multi_label_tags(ticket: TicketInput, issue_type: str, sub_category: str) -> list[str]:
+def extract_multi_label_tags(
+    ticket: TicketInput, issue_type: str, sub_category: str
+) -> list[str]:
     tags: set[str] = set()
     if issue_type:
         tags.add(issue_type)
@@ -66,50 +107,49 @@ def extract_multi_label_tags(ticket: TicketInput, issue_type: str, sub_category:
     return sorted(list(tags))
 
 
-class GroqClassifier:
-    """Groq LLM classifier fallback using gemma2-9b-it."""
+def _build_classification_prompt(subject: str, body: str) -> str:
+    """Shared instruction text for all LLM classifiers (JSON issue_type/urgency)."""
+    return (
+        "Classify the following support ticket into an issue_type "
+        "(billing, technical, account, feature_request, general) and "
+        "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
+        f"Subject: {subject}\nBody: {body}"
+    )
 
-    def __init__(
-        self,
-        api_key: str | None = None,
-        model: str = "gemma2-9b-it",
-        timeout: float = 3.0,
-    ):
-        self.api_key = api_key
-        self.model = model
-        self.timeout = timeout
-        self.endpoint = "https://api.groq.com/openai/v1/chat/completions"
+
+class BaseLLMClassifier:
+    """Template Method base for LLM-backed ticket classifiers.
+
+    Subclasses only supply the provider-specific request shape
+    (`_build_request`) and response-unwrapping path (`_extract_content`).
+    The shared `classify()` owns the POST call, defensive string-or-dict
+    JSON parsing, and blanket exception-swallowing (return None on any
+    failure) that all providers previously duplicated.
+    """
+
+    timeout: float
+
+    def _build_request(self, ticket: TicketInput) -> tuple[str, dict, dict] | None:
+        """Return (endpoint, headers, payload), or None to skip the call."""
+        raise NotImplementedError
+
+    def _extract_content(self, data: dict) -> str | dict | None:
+        """Pull the provider-specific classification text/dict out of `data`."""
+        raise NotImplementedError
 
     def classify(self, ticket: TicketInput) -> TicketClassification | None:
-        api_key = self.api_key or os.getenv("GROQ_API_KEY")
-        if not api_key:
+        request = self._build_request(ticket)
+        if request is None:
             return None
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-        prompt = (
-            "Classify the following support ticket into an issue_type "
-            "(billing, technical, account, feature_request, general) and "
-            "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
-            f"Subject: {sanitize_text(ticket.subject)}\nBody: {sanitize_text(ticket.body)}"
-        )
-        payload = {
-            "model": self.model,
-            "messages": [{"role": "user", "content": prompt}],
-            "response_format": {"type": "json_object"},
-        }
+        endpoint, headers, payload = request
         try:
             response = httpx.post(
-                self.endpoint, headers=headers, json=payload, timeout=self.timeout
+                endpoint, headers=headers, json=payload, timeout=self.timeout
             )
             if response.status_code != 200:
                 return None
             data = response.json()
-            choices = data.get("choices", [])
-            if not choices:
-                return None
-            content = choices[0].get("message", {}).get("content")
+            content = self._extract_content(data)
             if not content:
                 return None
             if isinstance(content, str):
@@ -123,7 +163,46 @@ class GroqClassifier:
             return None
 
 
-class GeminiClassifier:
+class GroqClassifier(BaseLLMClassifier):
+    """Groq LLM classifier fallback using gemma2-9b-it."""
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "gemma2-9b-it",
+        timeout: float = 3.0,
+    ):
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+        self.endpoint = "https://api.groq.com/openai/v1/chat/completions"
+
+    def _build_request(self, ticket: TicketInput) -> tuple[str, dict, dict] | None:
+        api_key = self.api_key or os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return None
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        prompt = _build_classification_prompt(
+            sanitize_text(ticket.subject), sanitize_text(ticket.body)
+        )
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"},
+        }
+        return self.endpoint, headers, payload
+
+    def _extract_content(self, data: dict) -> str | dict | None:
+        choices = data.get("choices", [])
+        if not choices:
+            return None
+        return choices[0].get("message", {}).get("content")
+
+
+class GeminiClassifier(BaseLLMClassifier):
     """Gemini LLM classifier fallback using gemini-2.5-flash."""
 
     def __init__(
@@ -136,47 +215,31 @@ class GeminiClassifier:
         self.model = model
         self.timeout = timeout
 
-    def classify(self, ticket: TicketInput) -> TicketClassification | None:
+    def _build_request(self, ticket: TicketInput) -> tuple[str, dict, dict] | None:
         api_key = self.api_key or os.getenv("GEMINI_API_KEY")
         if not api_key:
             return None
         endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={api_key}"
-        prompt = (
-            "Classify the following support ticket into an issue_type "
-            "(billing, technical, account, feature_request, general) and "
-            "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
-            f"Subject: {sanitize_text(ticket.subject)}\nBody: {sanitize_text(ticket.body)}"
+        prompt = _build_classification_prompt(
+            sanitize_text(ticket.subject), sanitize_text(ticket.body)
         )
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {"responseMimeType": "application/json"},
         }
-        try:
-            response = httpx.post(endpoint, json=payload, timeout=self.timeout)
-            if response.status_code != 200:
-                return None
-            data = response.json()
-            candidates = data.get("candidates", [])
-            if not candidates:
-                return None
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if not parts:
-                return None
-            raw_res = parts[0].get("text")
-            if not raw_res:
-                return None
-            if isinstance(raw_res, str):
-                parsed = json.loads(raw_res)
-            elif isinstance(raw_res, dict):
-                parsed = raw_res
-            else:
-                return None
-            return TicketClassification(**parsed)
-        except Exception:
+        return endpoint, {}, payload
+
+    def _extract_content(self, data: dict) -> str | dict | None:
+        candidates = data.get("candidates", [])
+        if not candidates:
             return None
+        parts = candidates[0].get("content", {}).get("parts", [])
+        if not parts:
+            return None
+        return parts[0].get("text")
 
 
-class OllamaClassifier:
+class OllamaClassifier(BaseLLMClassifier):
     """Ollama LLM classifier fallback."""
 
     def __init__(
@@ -200,7 +263,7 @@ class OllamaClassifier:
             # Quick health check to verify if local Ollama daemon is active
             tags_endpoint = endpoint.rsplit("/", 1)[0] + "/tags"
             resp = httpx.get(tags_endpoint, timeout=0.3)
-            self._is_available = (resp.status_code == 200)
+            self._is_available = resp.status_code == 200
         except Exception:
             self._is_available = False
         return self._is_available
@@ -208,39 +271,23 @@ class OllamaClassifier:
     def classify(self, ticket: TicketInput) -> TicketClassification | None:
         if not self.check_availability():
             return None
+        return super().classify(ticket)
 
+    def _build_request(self, ticket: TicketInput) -> tuple[str, dict, dict] | None:
         endpoint = self.endpoint or os.getenv(
             "OLLAMA_ENDPOINT", "http://localhost:11434/api/generate"
         )
-        prompt = (
-            "Classify the following support ticket into an issue_type "
-            "(billing, technical, account, feature_request, general) and "
-            "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
-            f"Subject: {ticket.subject}\nBody: {ticket.body}"
-        )
+        prompt = _build_classification_prompt(ticket.subject, ticket.body)
         payload = {
             "model": "gemma-4 E2B",
             "prompt": prompt,
             "format": "json",
             "stream": False,
         }
-        try:
-            response = httpx.post(endpoint, json=payload, timeout=self.timeout)
-            if response.status_code != 200:
-                return None
-            data = response.json()
-            raw_res = data.get("response")
-            if not raw_res:
-                return None
-            if isinstance(raw_res, str):
-                parsed = json.loads(raw_res)
-            elif isinstance(raw_res, dict):
-                parsed = raw_res
-            else:
-                return None
-            return TicketClassification(**parsed)
-        except Exception:
-            return None
+        return endpoint, {}, payload
+
+    def _extract_content(self, data: dict) -> str | dict | None:
+        return data.get("response")
 
 
 class DefaultFallbackClassifier:
@@ -279,25 +326,54 @@ def compute_ticket_score_and_reasons(
     text = f"{ticket.subject} {ticket.body}".lower()
 
     # Churn Risk
-    churn_keywords = ["cancel", "cancellation", "switching", "closing account", "churn", "close my account"]
+    churn_keywords = [
+        "cancel",
+        "cancellation",
+        "switching",
+        "closing account",
+        "churn",
+        "close my account",
+    ]
     if any(kw in text for kw in churn_keywords):
         base += 12
         reasons.append("Churn risk (mentions cancelling)")
 
     # Legal / Escalation Risk
-    legal_keywords = ["lawyer", "legal", "sue", "attorney", "regulator", "compliance", "unauthorized", "fraud"]
+    legal_keywords = [
+        "lawyer",
+        "legal",
+        "sue",
+        "attorney",
+        "regulator",
+        "compliance",
+        "unauthorized",
+        "fraud",
+    ]
     if any(kw in text for kw in legal_keywords):
         base += 12
         reasons.append("Legal escalation risk")
 
     # Financial / Refund Risk
-    financial_keywords = ["refund", "double charged", "overcharged", "money owed", "invoice"]
+    financial_keywords = [
+        "refund",
+        "double charged",
+        "overcharged",
+        "money owed",
+        "invoice",
+    ]
     if any(kw in text for kw in financial_keywords):
         base += 8
         reasons.append("Money owed / refund risk")
 
     # Data Loss / Outage Risk
-    outage_keywords = ["data loss", "outage", "system down", "500 error", "server down", "can't access"]
+    outage_keywords = [
+        "data loss",
+        "outage",
+        "system down",
+        "500 error",
+        "server down",
+        "can't access",
+    ]
     if any(kw in text for kw in outage_keywords):
         base += 10
         reasons.append("Possible data loss or outage")
@@ -345,19 +421,25 @@ def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
         confidence_source = "rule"
 
         # Step 2: If LLM_PROVIDER == "groq" or GROQ_API_KEY present -> GroqClassifier
-        if classification is None and (provider == "groq" or (provider == "auto" and groq_key)):
+        if classification is None and (
+            provider == "groq" or (provider == "auto" and groq_key)
+        ):
             classification = groq_classifier.classify(ticket)
             if classification is not None:
                 confidence_source = "llm"
 
         # Step 3: If LLM_PROVIDER == "gemini" or GEMINI_API_KEY present -> GeminiClassifier
-        if classification is None and (provider == "gemini" or (provider == "auto" and gemini_key)):
+        if classification is None and (
+            provider == "gemini" or (provider == "auto" and gemini_key)
+        ):
             classification = gemini_classifier.classify(ticket)
             if classification is not None:
                 confidence_source = "llm"
 
         # Step 4: If LLM_PROVIDER == "ollama" or OLLAMA_ENDPOINT present -> OllamaClassifier
-        if classification is None and (provider == "ollama" or os.getenv("OLLAMA_ENDPOINT")):
+        if classification is None and (
+            provider == "ollama" or os.getenv("OLLAMA_ENDPOINT")
+        ):
             classification = ollama_classifier.classify(ticket)
             if classification is not None:
                 confidence_source = "llm"
@@ -648,4 +730,3 @@ def generate_ticket_response(
 
     closing = "\n\nPlease let us know if you have any additional details to add in the meantime.\n\nBest regards,\nTechFlow Support Team"
     return f"{greeting}\n\n{body_reply}\n{closing}", "template"
-

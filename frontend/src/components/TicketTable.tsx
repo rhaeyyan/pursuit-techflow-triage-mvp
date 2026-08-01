@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
 import { TriagedTicket } from '../types';
-import { ChevronDown, ChevronUp, Copy, Check, Sparkles, Cpu, Shield, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock } from 'lucide-react';
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+import { ChevronDown, ChevronUp, Copy, Check, Sparkles, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock } from 'lucide-react';
+import { useTicketEdits } from '../hooks/useTicketEdits';
+import { generateTicketResponse } from '../lib/ticketsApi';
+import { buildFallbackResponseTemplate } from '../lib/fallbackResponseTemplate';
+import {
+  renderScoreBadge,
+  renderStatusBadge,
+  renderUrgencyBadge,
+  renderConfidenceBadge,
+  formatDate,
+  formatIssueType,
+  formatSubCategory,
+  sortTicketsForDisplay,
+  SortField,
+} from '../lib/ticketFormatters';
 
 interface TicketTableProps {
   tickets: TriagedTicket[];
@@ -13,17 +25,21 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
   const [expandedTicketIds, setExpandedTicketIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Persistence & Edit state
-  const [savedStatuses, setSavedStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
-  const [savedAssignees, setSavedAssignees] = useState<Record<string, string | null>>({});
-  const [savedUpdatedAts, setSavedUpdatedAts] = useState<Record<string, string>>({});
-  const [pendingStatuses, setPendingStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
-  const [pendingAssignees, setPendingAssignees] = useState<Record<string, string | null>>({});
+  // Persistence & Edit state (pending vs. saved vs. server) lives in this hook.
+  const {
+    getEffectiveStatus,
+    getEffectiveAssignee,
+    getEffectiveUpdatedAt,
+    hasUnsavedChanges,
+    setPendingStatus,
+    setPendingAssignee,
+    handleSaveTicket,
+    handleDiscardChanges,
+    savingIds,
+    saveSuccessIds,
+  } = useTicketEdits();
 
-  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
-  const [saveSuccessIds, setSaveSuccessIds] = useState<Set<string>>(new Set());
-
-  const [sortField, setSortField] = useState<'score' | 'rank' | 'date' | 'id'>('score');
+  const [sortField, setSortField] = useState<SortField>('score');
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
   const [generatedResponses, setGeneratedResponses] = useState<Record<string, { text: string; source: string }>>({});
@@ -49,200 +65,23 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const getEffectiveStatus = (ticket: TriagedTicket): 'new' | 'in-progress' | 'escalated' | 'resolved' => {
-    const tId = ticket.ticket_id;
-    if (pendingStatuses[tId] !== undefined) return pendingStatuses[tId];
-    if (savedStatuses[tId] !== undefined) return savedStatuses[tId];
-    return (ticket.status as any) || 'new';
-  };
-
-  const getEffectiveAssignee = (ticket: TriagedTicket): string | null => {
-    const tId = ticket.ticket_id;
-    if (pendingAssignees[tId] !== undefined) return pendingAssignees[tId];
-    if (savedAssignees[tId] !== undefined) return savedAssignees[tId];
-    return ticket.assignee || null;
-  };
-
-  const getEffectiveUpdatedAt = (ticket: TriagedTicket): string | null => {
-    const tId = ticket.ticket_id;
-    if (savedUpdatedAts[tId]) return savedUpdatedAts[tId];
-    return ticket.updated_at || null;
-  };
-
-  const hasUnsavedChanges = (ticket: TriagedTicket): boolean => {
-    const tId = ticket.ticket_id;
-    const currentStatus = getEffectiveStatus(ticket);
-    const savedStatus = savedStatuses[tId] !== undefined ? savedStatuses[tId] : (ticket.status || 'new');
-    
-    const currentAssignee = getEffectiveAssignee(ticket);
-    const savedAssignee = savedAssignees[tId] !== undefined ? savedAssignees[tId] : (ticket.assignee || null);
-
-    return currentStatus !== savedStatus || currentAssignee !== savedAssignee;
-  };
-
-  const handleSaveTicket = async (ticket: TriagedTicket, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const tId = ticket.ticket_id;
-    const newStatus = getEffectiveStatus(ticket);
-    const newAssignee = getEffectiveAssignee(ticket);
-    const nowIso = new Date().toISOString();
-
-    setSavingIds((prev) => new Set(prev).add(tId));
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets/${tId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, assignee: newAssignee }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.updated_at) {
-          setSavedUpdatedAts((prev) => ({ ...prev, [tId]: data.updated_at }));
-        } else {
-          setSavedUpdatedAts((prev) => ({ ...prev, [tId]: nowIso }));
-        }
-      } else {
-        setSavedUpdatedAts((prev) => ({ ...prev, [tId]: nowIso }));
-      }
-    } catch {
-      setSavedUpdatedAts((prev) => ({ ...prev, [tId]: nowIso }));
-    } finally {
-      setSavedStatuses((prev) => ({ ...prev, [tId]: newStatus }));
-      setSavedAssignees((prev) => ({ ...prev, [tId]: newAssignee }));
-
-      setPendingStatuses((prev) => {
-        const next = { ...prev };
-        delete next[tId];
-        return next;
-      });
-      setPendingAssignees((prev) => {
-        const next = { ...prev };
-        delete next[tId];
-        return next;
-      });
-
-      setSavingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(tId);
-        return next;
-      });
-
-      setSaveSuccessIds((prev) => new Set(prev).add(tId));
-      setTimeout(() => {
-        setSaveSuccessIds((prev) => {
-          const next = new Set(prev);
-          next.delete(tId);
-          return next;
-        });
-      }, 2500);
-    }
-  };
-
-  const handleDiscardChanges = (ticketId: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setPendingStatuses((prev) => {
-      const next = { ...prev };
-      delete next[ticketId];
-      return next;
-    });
-    setPendingAssignees((prev) => {
-      const next = { ...prev };
-      delete next[ticketId];
-      return next;
-    });
-  };
-
-  const renderScoreBadge = (score?: number) => {
-    const s = score !== undefined ? score : 50;
-    let badgeClass = 'score-low';
-    if (s >= 80) badgeClass = 'score-critical';
-    else if (s >= 60) badgeClass = 'score-high';
-    else if (s >= 40) badgeClass = 'score-medium';
-
-    return (
-      <span className={`score-badge ${badgeClass}`} title={`Multi-factor priority score: ${s}/100`}>
-        {s}
-      </span>
-    );
-  };
-
-  const renderStatusBadge = (ticket: TriagedTicket) => {
-    const tId = ticket.ticket_id;
-    const st = getEffectiveStatus(ticket);
-    let pillClass = 'status-new';
-    if (st === 'in-progress') pillClass = 'status-in-progress';
-    else if (st === 'escalated') pillClass = 'status-escalated';
-    else if (st === 'resolved') pillClass = 'status-resolved';
-
-    return (
-      <select
-        className={`status-pill ${pillClass}`}
-        value={st}
-        onChange={(e) => {
-          e.stopPropagation();
-          setPendingStatuses((prev) => ({ ...prev, [tId]: e.target.value as any }));
-        }}
-        onClick={(e) => e.stopPropagation()}
-        style={{ cursor: 'pointer', outline: 'none' }}
-      >
-        <option value="new">New</option>
-        <option value="in-progress">In Progress</option>
-        <option value="escalated">Escalated</option>
-        <option value="resolved">Resolved</option>
-      </select>
-    );
-  };
-
   const handleGenerateResponse = async (ticket: TriagedTicket, e: React.MouseEvent) => {
     e.stopPropagation();
     const tId = ticket.ticket_id;
     setGeneratingIds((prev) => new Set(prev).add(tId));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets/generate-response`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ticket_id: ticket.ticket_id,
-          subject: ticket.subject,
-          body: ticket.body,
-          issue_type: ticket.issue_type,
-          urgency: ticket.urgency,
-        }),
+      const result = await generateTicketResponse({
+        ticket_id: ticket.ticket_id,
+        subject: ticket.subject,
+        body: ticket.body,
+        issue_type: ticket.issue_type,
+        urgency: ticket.urgency,
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        setGeneratedResponses((prev) => ({
-          ...prev,
-          [tId]: { text: data.suggested_response, source: data.source },
-        }));
-      } else {
-        throw new Error('Backend returned status error');
-      }
+      setGeneratedResponses((prev) => ({ ...prev, [tId]: result }));
     } catch {
       // Fallback smart response template generator if API endpoint is offline
-      const categoryNorm = ticket.issue_type.toLowerCase();
-      const urgencyNorm = ticket.urgency.toLowerCase();
-      let bodyReply = `We have received your ticket regarding '${ticket.subject}' and assigned it to our specialist team for review.`;
-
-      if (categoryNorm.includes('billing')) {
-        bodyReply = urgencyNorm === 'critical'
-          ? `We have flagged your ticket regarding '${ticket.subject}' as Critical Priority. Our billing operations team has been immediately notified to audit your transaction records. Any erroneous billing charges or duplicate invoices will be reversed promptly within 1 business day.`
-          : `We have received your billing inquiry regarding '${ticket.subject}'. Our accounting team is reviewing invoice details for your account and will confirm payment adjustments or credit status shortly.`;
-      } else if (categoryNorm.includes('technical')) {
-        bodyReply = urgencyNorm === 'critical'
-          ? `We have escalated your report '${ticket.subject}' to our Senior Infrastructure & Site Reliability Engineering team as a Critical Incident. Our engineers are actively investigating server logs and system metrics. We will provide real-time updates as we work toward resolution.`
-          : `Our technical engineering team is investigating your report regarding '${ticket.subject}'. We are testing steps to reproduce the issue and will share diagnostic findings or a patch update shortly.`;
-      } else if (categoryNorm.includes('account')) {
-        bodyReply = `We have received your account security inquiry regarding '${ticket.subject}'. To safeguard your account integrity, our security desk is verifying session logs and access controls. If you are unable to access your portal, please ensure your multi-factor authentication device is active.`;
-      } else if (categoryNorm.includes('feature')) {
-        bodyReply = `Thank you for sharing your feature suggestion regarding '${ticket.subject}'! We love hearing feedback from our community. Your request has been logged with our Product Management team for evaluation during upcoming roadmap planning cycles.`;
-      }
-
-      const templateText = `Hello,\n\nThank you for reaching out to TechFlow Support.\n\n${bodyReply}\n\nPlease let us know if you have any additional details to add in the meantime.\n\nBest regards,\nTechFlow Support Team`;
-
+      const templateText = buildFallbackResponseTemplate(ticket.subject, ticket.issue_type, ticket.urgency);
       setGeneratedResponses((prev) => ({
         ...prev,
         [tId]: { text: templateText, source: 'template' },
@@ -256,137 +95,9 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     }
   };
 
-  const formatDate = (dateStr?: string | null) => {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return dateStr;
-    }
-  };
+  const sortedTickets = sortTicketsForDisplay(tickets, sortField, sortAsc);
 
-  const renderUrgencyBadge = (urgency: string, score: number) => {
-    const norm = urgency.toLowerCase();
-    let badgeClass = 'badge-low';
-    let label = `Low`;
-
-    if (norm === 'critical' || score === 4) {
-      badgeClass = 'badge-critical';
-      label = `Critical`;
-    } else if (norm === 'high' || score === 3) {
-      badgeClass = 'badge-high';
-      label = `High`;
-    } else if (norm === 'medium' || score === 2) {
-      badgeClass = 'badge-medium';
-      label = `Medium`;
-    }
-
-    return (
-      <span className={`badge ${badgeClass}`}>
-        {norm === 'critical' && <span className="critical-pulse-dot" style={{ width: '6px', height: '6px' }} />}
-        {label}
-      </span>
-    );
-  };
-
-  const renderConfidenceBadge = (source: string, isTopRow = false) => {
-    const norm = source.toLowerCase();
-    const wrapperClass = `tooltip-wrapper ${isTopRow ? 'tooltip-bottom' : ''}`;
-    if (norm.includes('rule')) {
-      return (
-        <span className={wrapperClass}>
-          <span className="badge badge-source-rule">
-            <Shield size={11} />
-            Rule Engine
-          </span>
-          <span className="tooltip-content">
-            <strong>Deterministic Rule Engine</strong><br />
-            Classified using keyword and pattern matching against known critical signals (e.g. "billing error," "can't access," "data loss"). Fast, predictable, and traceable — no AI model involved.
-          </span>
-        </span>
-      );
-    }
-    if (norm.includes('llm') || norm.includes('gemma')) {
-      return (
-        <span className={wrapperClass}>
-          <span className="badge badge-source-llm">
-            <Sparkles size={11} />
-            LLM Classifier
-          </span>
-          <span className="tooltip-content">
-            <strong>LLM Classifier</strong><br />
-            Classified using a cloud large language model (Groq / Gemini) for edge-case tickets that didn't match deterministic rules. Provides nuanced categorization for ambiguous ticket content.
-          </span>
-        </span>
-      );
-    }
-    return (
-      <span className={wrapperClass}>
-        <span className="badge badge-source-fallback">
-          <Cpu size={11} />
-          Fallback
-        </span>
-        <span className="tooltip-content">
-          <strong>Fallback Classifier</strong><br />
-          Applied when neither the rule engine nor the LLM could confidently classify this ticket. Defaults to a safe baseline triage (general / medium) to ensure no ticket is left unprocessed.
-        </span>
-      </span>
-    );
-  };
-
-  const formatIssueType = (issueType: string) => {
-    const map: Record<string, string> = {
-      technical: 'Technical',
-      billing: 'Billing',
-      account: 'Account Security',
-      feature_request: 'Feature Request',
-      general: 'General',
-    };
-    return map[issueType.toLowerCase()] || issueType;
-  };
-
-  const formatSubCategory = (subCat?: string) => {
-    if (!subCat || subCat === 'general') return null;
-    const map: Record<string, string> = {
-      database_outage: 'Database',
-      server_crash: 'Server Crash',
-      network: 'Network',
-      software_bug: 'Software Bug',
-      payment_gateway: 'Payment Gateway',
-      invoice_refund: 'Invoice Refund',
-      auth_security: 'Security & Auth',
-      user_maintenance: 'User Maintenance',
-      product_roadmap: 'Product Roadmap',
-    };
-    return map[subCat.toLowerCase()] || subCat.replace('_', ' ');
-  };
-
-  const sortedTickets = [...tickets].sort((a, b) => {
-    if (sortField === 'date') {
-      const dA = new Date(a.created_at || 0).getTime();
-      const dB = new Date(b.created_at || 0).getTime();
-      return sortAsc ? dA - dB : dB - dA;
-    }
-    if (sortField === 'id') {
-      return sortAsc ? a.ticket_id.localeCompare(b.ticket_id) : b.ticket_id.localeCompare(a.ticket_id);
-    }
-    if (sortField === 'score') {
-      const sA = a.score !== undefined ? a.score : a.urgency_score * 25;
-      const sB = b.score !== undefined ? b.score : b.urgency_score * 25;
-      return sortAsc ? sB - sA : sA - sB;
-    }
-    const scoreDiff = b.urgency_score - a.urgency_score;
-    return sortAsc ? scoreDiff : -scoreDiff;
-  });
-
-  const toggleSort = (field: 'score' | 'rank' | 'date' | 'id') => {
+  const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -613,7 +324,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
 
                     {/* Status Pill */}
                     <td style={{ padding: '14px 16px' }}>
-                      {renderStatusBadge(ticket)}
+                      {renderStatusBadge(ticket, getEffectiveStatus(ticket), setPendingStatus)}
                     </td>
 
                     {/* Source with Tooltip */}
@@ -745,15 +456,15 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                                     value={assignedUser || ''}
                                     onChange={(e) => {
                                       e.stopPropagation();
-                                      setPendingAssignees((prev) => ({ ...prev, [ticket.ticket_id]: e.target.value || null }));
+                                      setPendingAssignee(ticket.ticket_id, e.target.value || null);
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <option value="">Unassigned</option>
                                     <option value="Jordan">Jordan M.</option>
-                                    <option value="Priya">Priya S.</option>
-                                    <option value="Marcus">Marcus K.</option>
-                                    <option value="Dana">Dana R.</option>
+                                    <option value="Sofia">Sofia R.</option>
+                                    <option value="Miguel">Miguel T.</option>
+                                    <option value="Aisha">Aisha B.</option>
                                   </select>
                                 </span>
 
@@ -821,7 +532,10 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                                     cursor: 'pointer',
                                     fontWeight: 600,
                                   }}
-                                  onClick={(e) => handleSaveTicket(ticket, e)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSaveTicket(ticket);
+                                  }}
                                   disabled={savingIds.has(ticket.ticket_id)}
                                   title="Confirm and save ticket status and assignee updates"
                                 >
@@ -839,7 +553,10 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                                   type="button"
                                   className="btn-secondary"
                                   style={{ padding: '6px 10px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                  onClick={(e) => handleDiscardChanges(ticket.ticket_id, e)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDiscardChanges(ticket.ticket_id);
+                                  }}
                                   title="Discard unsaved changes"
                                 >
                                   <X size={13} />

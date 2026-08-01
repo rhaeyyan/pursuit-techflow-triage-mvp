@@ -7,8 +7,7 @@ import { FilterBar } from './components/FilterBar';
 import { TicketTable } from './components/TicketTable';
 import { TrendBanner } from './components/TrendBanner';
 import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck, Sun, Moon, Github, Globe, Linkedin } from 'lucide-react';
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+import { API_BASE_URL } from './lib/ticketsApi';
 
 function getInitialTheme(): 'light' | 'dark' {
   const stored = localStorage.getItem('techflow-theme');

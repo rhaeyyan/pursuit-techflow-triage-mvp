@@ -86,39 +86,39 @@ The diagram below illustrates the end-to-end execution flow of TechFlow Support 
 
 ```mermaid
 flowchart TD
-    UserCSV["Customer Support Tickets (CSV Upload)"] --> CSVParser
+    UserCSV["Customer Support Tickets (CSV Upload)"] --> CSVParser["CSV Header Normalization & Ingestion"]
 
-    subgraph Deterministic_Engine ["DETERMINISTIC TRIAGE ENGINE (Python Backend - Sub-Millisecond)"]
-        CSVParser["CSV Header Normalization & Ingestion"] --> RuleEngineCheck{"Match Keyword Rules?"}
-        RuleEngineCheck -- "YES (e.g., 'billing error', 'outage')" --> RuleResult["Rule Engine Classification<br/>(Urgency: 1-4, Category)"]
-        RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Provider / API Key Configured?"}
+    subgraph Pipeline ["Phase 1: Ingestion, Classification & Sorting"]
+        direction TB
+        CSVParser --> RuleEngineCheck{"Match Keyword Rules?"}
         
-        CheckLLMConfig -- "NO / Offline" --> DefaultFallback["Safe Default Fallback<br/>(Category: general, Urgency: medium)"]
+        RuleEngineCheck -- "YES (Keyword Match)" --> RuleResult["Rule Engine Classification<br/>(Urgency: 1-4, Category)"]
+        RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Configured?"}
         
-        RuleResult --> PrioritySort["Sorting Engine<br/>(Rank by Urgency Score 4->1 & Timestamp)"]
+        CheckLLMConfig -- "YES (Groq / Gemini)" --> LLMClassify["Cloud LLM Classification<br/>(Structured JSON Output)"]
+        CheckLLMConfig -- "NO (Offline)" --> DefaultFallback["Safe Default Fallback<br/>(Category: general, Urgency: medium)"]
+        
+        RuleResult --> PrioritySort["Sorting Engine<br/>(Rank by Urgency Score & Timestamp)"]
+        LLMClassify --> PrioritySort
         DefaultFallback --> PrioritySort
-        LLMClassResult --> PrioritySort
-
-        PrioritySort --> RenderUI["React SPA Prioritized Queue Table & Filters"]
         
-        CheckDraftLLM{"LLM API Key Active?"} -- "NO" --> TemplateDraft["Smart Template Response Generator<br/>(Interpolates Ticket Metadata)"]
+        PrioritySort --> RenderUI["React SPA Queue Table & Filters"]
     end
 
-    subgraph AI_LLM_Domain ["OPTIONAL AI / LLM CLOUD DOMAIN (Groq Gemma-2-9B / Gemini 2.5 Flash)"]
-        CheckLLMConfig -- "YES (Groq / Gemini)" --> LLMClassifyCall["Call Cloud LLM API for Ticket Classification"]
-        LLMClassifyCall --> LLMClassResult["LLM Structured JSON Classification"]
+    subgraph Drafting ["Phase 2: Customer Response Generation"]
+        direction TB
+        RenderUI -- "User Clicks 'Generate Draft'" --> CheckDraftLLM{"LLM API Key Active?"}
         
-        CheckDraftLLM -- "YES" --> LLMResponseGen["Generate AI Customer Email Draft<br/>(Groq Gemma / Gemini Flash)"]
+        CheckDraftLLM -- "YES" --> LLMResponseGen["Generate AI Customer Email Draft<br/>(Cloud LLM: Groq Gemma / Gemini)"]
+        CheckDraftLLM -- "NO" --> TemplateDraft["Smart Template Response Generator<br/>(Deterministic Metadata Draft)"]
+        
+        LLMResponseGen --> DisplayDraft["Customer Response Draft Interface"]
+        TemplateDraft --> DisplayDraft
     end
-
-    RenderUI -- "User Clicks 'Generate Draft'" --> CheckDraftLLM
-    
-    LLMResponseGen --> DisplayDraft["Customer Response Draft (Copy & Edit Interface)"]
-    TemplateDraft --> DisplayDraft
 
     class UserCSV,DisplayDraft inputOutput;
     class CSVParser,RuleResult,DefaultFallback,PrioritySort,RenderUI,TemplateDraft deterministic;
-    class LLMClassifyCall,LLMClassResult,LLMResponseGen aiDomain;
+    class LLMClassify,LLMResponseGen aiDomain;
     class RuleEngineCheck,CheckLLMConfig,CheckDraftLLM decision;
 
     classDef deterministic fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
@@ -126,6 +126,12 @@ flowchart TD
     classDef decision fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
     classDef inputOutput fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
 ```
+
+> **Legend**:
+> - **Blue Nodes** (`deterministic`): 100% predictable Python logic & React SPA UI (sub-millisecond execution).
+> - **Purple Nodes** (`aiDomain`): Optional Cloud AI/LLM domain (Groq Gemma / Gemini Flash).
+> - **Amber Diamonds** (`decision`): Routing & configuration decision logic.
+> - **Green Nodes** (`inputOutput`): CSV Data Ingestion & Customer Response Draft Output.
 
 ### Build order (walking skeleton)
 

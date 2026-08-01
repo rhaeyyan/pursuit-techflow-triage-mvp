@@ -80,6 +80,48 @@ tool is built to work on any CSV of support tickets with similar structure.
 
 ## Technical Notes
 
+### System Architecture & Execution Flow
+
+The diagram below illustrates the end-to-end execution flow of TechFlow Support Queue, explicitly distinguishing between the **Deterministic Domain** (100% predictable Python logic & React state) and the **LLM/AI Domain** (optional cloud AI generation via Groq / Gemini):
+
+```mermaid
+flowchart TD
+    classDef deterministic fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef aiDomain fill:#3b0764,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
+    classDef decision fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
+    classDef inputOutput fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
+
+    UserCSV["📄 Customer Support Tickets (CSV Upload)"] :::inputOutput --> CSVParser["⚙️ CSV Header Normalization & Ingestion"] :::deterministic
+
+    subgraph Deterministic_Engine ["⚙️ DETERMINISTIC TRIAGE ENGINE (Python Backend - Sub-Millisecond)"]
+        CSVParser --> RuleEngineCheck{"🔍 Match Keyword Rules?"} :::decision
+        RuleEngineCheck -- "YES (e.g., 'billing error', 'outage')" --> RuleResult["Rule Engine Classification\n(Urgency: 1-4, Category)"] :::deterministic
+        
+        RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Provider / API Key Configured?"} :::decision
+        
+        CheckLLMConfig -- "NO / Offline" --> DefaultFallback["Safe Default Fallback\n(Category: general, Urgency: medium)"] :::deterministic
+        
+        RuleResult --> PrioritySort["Sorting Engine\n(Rank by Urgency Score 4->1 & Timestamp)"] :::deterministic
+        DefaultFallback --> PrioritySort
+        LLMClassResult --> PrioritySort
+
+        PrioritySort --> RenderUI["🖥️ React SPA Prioritized Queue Table & Filters"] :::deterministic
+    end
+
+    subgraph AI_LLM_Domain ["🧠 OPTIONAL AI / LLM CLOUD DOMAIN (Groq Gemma-2-9B / Gemini 2.5 Flash)"]
+        CheckLLMConfig -- "YES (Groq / Gemini)" --> LLMClassifyCall["Call Cloud LLM API for Ticket Classification"] :::aiDomain
+        LLMClassifyCall --> LLMClassResult["LLM Structured JSON Classification"] :::aiDomain
+        
+        RenderUI -- "User Clicks 'Generate Draft'" --> CheckDraftLLM{"LLM API Key Active?"} :::decision
+        CheckDraftLLM -- "YES" --> LLMResponseGen["Generate AI Customer Email Draft\n(Groq Gemma / Gemini Flash)"] :::aiDomain
+    end
+
+    CheckDraftLLM -- "NO" --> TemplateDraft["Smart Template Response Generator\n(Interpolates Ticket Metadata)"] :::deterministic
+    
+    LLMResponseGen --> DisplayDraft["✉️ Customer Response Draft (Copy & Edit Interface)"] :::inputOutput
+    TemplateDraft --> DisplayDraft
+```
+
 ### Build order (walking skeleton)
 
 The thinnest end-to-end slice that solves Jordan's problem:

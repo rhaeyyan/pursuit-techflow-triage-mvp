@@ -91,10 +91,10 @@ flowchart TD
     classDef decision fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
     classDef inputOutput fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc;
 
-    UserCSV["📄 Customer Support Tickets (CSV Upload)"] :::inputOutput --> CSVParser["⚙️ CSV Header Normalization & Ingestion"] :::deterministic
+    UserCSV["Customer Support Tickets (CSV Upload)"] :::inputOutput --> CSVParser["CSV Header Normalization & Ingestion"] :::deterministic
 
-    subgraph Deterministic_Engine ["⚙️ DETERMINISTIC TRIAGE ENGINE (Python Backend - Sub-Millisecond)"]
-        CSVParser --> RuleEngineCheck{"🔍 Match Keyword Rules?"} :::decision
+    subgraph Deterministic_Engine ["DETERMINISTIC TRIAGE ENGINE (Python Backend - Sub-Millisecond)"]
+        CSVParser --> RuleEngineCheck{"Match Keyword Rules?"} :::decision
         RuleEngineCheck -- "YES (e.g., 'billing error', 'outage')" --> RuleResult["Rule Engine Classification\n(Urgency: 1-4, Category)"] :::deterministic
         
         RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Provider / API Key Configured?"} :::decision
@@ -105,10 +105,10 @@ flowchart TD
         DefaultFallback --> PrioritySort
         LLMClassResult --> PrioritySort
 
-        PrioritySort --> RenderUI["🖥️ React SPA Prioritized Queue Table & Filters"] :::deterministic
+        PrioritySort --> RenderUI["React SPA Prioritized Queue Table & Filters"] :::deterministic
     end
 
-    subgraph AI_LLM_Domain ["🧠 OPTIONAL AI / LLM CLOUD DOMAIN (Groq Gemma-2-9B / Gemini 2.5 Flash)"]
+    subgraph AI_LLM_Domain ["OPTIONAL AI / LLM CLOUD DOMAIN (Groq Gemma-2-9B / Gemini 2.5 Flash)"]
         CheckLLMConfig -- "YES (Groq / Gemini)" --> LLMClassifyCall["Call Cloud LLM API for Ticket Classification"] :::aiDomain
         LLMClassifyCall --> LLMClassResult["LLM Structured JSON Classification"] :::aiDomain
         
@@ -118,7 +118,7 @@ flowchart TD
 
     CheckDraftLLM -- "NO" --> TemplateDraft["Smart Template Response Generator\n(Interpolates Ticket Metadata)"] :::deterministic
     
-    LLMResponseGen --> DisplayDraft["✉️ Customer Response Draft (Copy & Edit Interface)"] :::inputOutput
+    LLMResponseGen --> DisplayDraft["Customer Response Draft (Copy & Edit Interface)"] :::inputOutput
     TemplateDraft --> DisplayDraft
 ```
 
@@ -159,12 +159,12 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 
 - **Backend Core**: Flexible CSV parsing with header alias normalization, 4-tier urgency scoring (`critical=4`, `high=3`, `medium=2`, `low=1`), classification pipeline (deterministic rule engine + safe default fallback), AI customer response draft generator (`/api/tickets/generate-response`), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). 100% test coverage with 15/15 passing `pytest` suite.
 - **Frontend SPA**: Modern, corporate-friendly UI with:
-  - 🌗 **Light/Dark Theme System**: Warm corporate cream palette for light mode alongside polished dark mode with smooth theme transitions and `localStorage` persistence.
-  - 📥 **Batch CSV Upload & Drag-and-Drop**: Supports arbitrary CSV uploads, custom header alias mapping, and one-click demo data loading.
-  - 📋 **Prioritized Triage Table**: Ranked ticket queue sorted by urgency score, live search, issue category filtering, expandable ticket body previews, and column sorting.
-  - 🤖 **AI-Assisted Draft Responses**: On-demand AI draft response generation inside expanded ticket views with one-click copy functionality.
-  - 💡 **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
-  - 🗑️ **Queue Management**: One-click queue reset to return to clean upload state.
+  - **Light/Dark Theme System**: Warm corporate cream palette for light mode alongside polished dark mode with smooth theme transitions and `localStorage` persistence.
+  - **Batch CSV Upload & Drag-and-Drop**: Supports arbitrary CSV uploads, custom header alias mapping, and one-click demo data loading.
+  - **Prioritized Triage Table**: Ranked ticket queue sorted by urgency score, live search, issue category filtering, expandable ticket body previews, and column sorting.
+  - **AI-Assisted Draft Responses**: On-demand AI draft response generation inside expanded ticket views with one-click copy functionality.
+  - **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
+  - **Queue Management**: One-click queue reset to return to clean upload state.
 - **Demo Datasets**: Includes Kaggle support ticket benchmark dataset (10 tickets) and a scalable 138-ticket sample CSV (`data/sample_138_tickets.csv`) for demonstration.
 
 ---

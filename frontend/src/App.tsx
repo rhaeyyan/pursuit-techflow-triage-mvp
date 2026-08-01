@@ -5,6 +5,7 @@ import { UploadCard } from './components/UploadCard';
 import { StatSummary } from './components/StatSummary';
 import { FilterBar } from './components/FilterBar';
 import { TicketTable } from './components/TicketTable';
+import { TrendBanner } from './components/TrendBanner';
 import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck, Sun, Moon, Github, Globe, Linkedin } from 'lucide-react';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
@@ -321,6 +322,12 @@ export const App: React.FC = () => {
             tickets={tickets}
             activeUrgencyFilter={filters.urgencyFilter}
             onSelectUrgencyFilter={(urgency) => setFilters({ ...filters, urgencyFilter: urgency })}
+          />
+
+          {/* AI Complaint Spikes & Trend Banner */}
+          <TrendBanner
+            tickets={tickets}
+            onSelectSearchQuery={(query) => setFilters({ ...filters, searchQuery: query })}
           />
 
           {/* Filter & Live Search Bar */}

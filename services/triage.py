@@ -6,6 +6,7 @@ import json
 import os
 import httpx
 from schemas import TicketClassification, TicketInput, TriagedTicket
+from services.anonymizer import sanitize_text
 
 URGENCY_SCORES = {
     "critical": 4,
@@ -77,7 +78,7 @@ class GroqClassifier:
             "Classify the following support ticket into an issue_type "
             "(billing, technical, account, feature_request, general) and "
             "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
-            f"Subject: {ticket.subject}\nBody: {ticket.body}"
+            f"Subject: {sanitize_text(ticket.subject)}\nBody: {sanitize_text(ticket.body)}"
         )
         payload = {
             "model": self.model,
@@ -130,7 +131,7 @@ class GeminiClassifier:
             "Classify the following support ticket into an issue_type "
             "(billing, technical, account, feature_request, general) and "
             "urgency (critical, high, medium, low). Return JSON with keys 'issue_type' and 'urgency'.\n"
-            f"Subject: {ticket.subject}\nBody: {ticket.body}"
+            f"Subject: {sanitize_text(ticket.subject)}\nBody: {sanitize_text(ticket.body)}"
         )
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],

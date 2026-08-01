@@ -55,14 +55,17 @@ Filters let Jordan drill into a specific category or urgency level.
 The tool uses a high-performance deterministic triage engine for ticket classification and prioritization:
 
 - **Multi-Factor 0-100 Priority Scoring Engine**: calculates a continuous priority score ($0 \to 100$) based on base urgency, channel impact, churn risk, legal escalation risk, data loss risk, and financial/refund indicators.
+- **Deterministic PII Anonymization Engine**: automatically redacts emails (`[EMAIL_REDACTED]`), IP addresses (`[IP_REDACTED]`), credit cards (`[CARD_REDACTED]`), and API key patterns prior to LLM processing or rendering.
+- **Hierarchical Two-Tier Taxonomy & Sub-Category Routing**: classifies tickets into primary categories (`technical`, `billing`, `account`) and granular sub-categories (`database_outage`, `server_crash`, `network`, `payment_gateway`, `auth_security`).
+- **Multi-Label Domain Tagging**: surfaces cross-domain tags (`#database`, `#infrastructure`, `#security`, `#refund`) to capture multi-system incident dependencies.
+- **Unsupervised Trend & Topic Spike Detection**: extracts n-gram frequency clusters across incoming batches to highlight emerging complaint spikes (*e.g., "Database Deadlock" (18%)*) with one-click filtering.
 - **Explainable Triage Signals & Risk Badges**: surfaces explicit reasoning tags for every ticket (e.g. *Churn risk (mentions cancelling)*, *Live phone — customer is waiting*, *Legal escalation risk*, *Possible data loss or outage*, *Money owed / refund risk*).
 - **Channel-Aware Risk Weighting**: automatically boosts priority for live channels (*Phone / Chat = +12/+10*) and public channels (*Social Media = +10 reputational risk*).
 - **Deterministic Rule Engine**: keyword and pattern matching for known critical signals (e.g. "billing error," "can't access," "data loss", "password reset") categorizes tickets and flags critical urgency instantly without external AI dependencies or GPU overhead.
 - **Structured Fallback Classifier**: unclassified or edge-case tickets default to a safe baseline triage (`general` / `medium`), ensuring continuous operational stability.
 - **Optional Cloud LLM Integration**: cloud LLM classification (Groq / Gemini) can optionally be enabled via environment variables for edge cases, but no local LLM setup is required.
-- **No invented data**: the tool categorizes and sorts — it does not generate fake ticket responses, fabricate priority scores, or guess at resolution steps. Every classification is traceable and predictable.
 
-> **Deterministic-First Discipline**: all sorting, multi-factor scoring ($0 \to 100$), and prioritization logic is 100% deterministic Python code. The core system operates entirely without local LLM daemons (like Ollama), offering sub-millisecond execution speeds and zero local VRAM overhead.
+> **Deterministic-First Discipline**: all sorting, multi-factor scoring ($0 \to 100$), PII scrubbing, and prioritization logic is 100% deterministic Python code. The core system operates entirely without local LLM daemons (like Ollama), offering sub-millisecond execution speeds and zero local VRAM overhead.
 
 ## The data behind it
 

@@ -1,3 +1,8 @@
+## Session: 2026-08-01 00:35 EDT
+- **Shipped**: Verified the README's "real Kaggle dataset" claim against the actual files — confirmed `data/customer_support_tickets.csv` (~8,469 rows) is authentic (schema match + known `{product_purchased}` template-bug fingerprint) but unused by any code path, while the "Load Demo Dataset" button and small sample CSVs are hand-authored, not Kaggle-derived. Corrected README wording to reflect that split and fixed the stale `sample_138_tickets.csv` → `sample_250_tickets.csv` reference.
+- **Blocked**: None.
+- **Next Step**: None outstanding from this thread.
+
 ## Session: 2026-07-31 23:56 EDT
 - **Shipped**: Banyan tree-wide refactor — Template Method consolidation of Groq/Gemini/Ollama classifiers in `services/triage.py`; decomposed the 1002-line `TicketTable.tsx` God Component into `hooks/useTicketEdits.ts` + `lib/{ticketsApi,fallbackResponseTemplate,ticketFormatters}`. Renamed demo specialist roster (Priya S./Marcus K./Dana R. → Sofia R./Miguel T./Aisha B.). Added a minimal Playwright e2e oracle (`frontend/e2e/`, `npm run e2e` / `e2e:mobile`) to satisfy `stop-oracle-check.sh`, which had no prior automated frontend oracle to run.
 - **Blocked**: None.

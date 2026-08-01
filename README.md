@@ -71,13 +71,22 @@ The tool uses a high-performance deterministic triage engine for ticket classifi
 
 ## The data behind it
 
-The MVP uses a real open-source customer support ticket dataset from Kaggle, selected because
-it matches the type of information someone in Jordan's role would actually work with. The
-dataset includes fields like ticket subject, body text, category, priority, channel, and
-customer satisfaction scores.
+A real open-source customer support ticket dataset from Kaggle ships in
+[`data/customer_support_tickets.csv`](file:///home/rayan/Documents/Python-Projects/techflow-support-queue/data/customer_support_tickets.csv)
+(~8,469 rows) as a reference / manual-upload sample — it was selected because it matches the
+type of information someone in Jordan's role would actually work with: fields like ticket
+subject, body text, category, priority, channel, and customer satisfaction scores. Upload it
+through the CSV ingestion flow to see the tool run against authentic ticket text; the app
+computes its own category and urgency from that text rather than trusting Kaggle's
+pre-existing labels.
 
-This is a learning exercise — TechFlow is a fictional company — but the data is real and the
-tool is built to work on any CSV of support tickets with similar structure.
+The one-click "Load Demo Dataset" button and the smaller sample CSVs
+(`data/sample_kaggle_tickets.csv`, `data/sample_250_tickets.csv`) are curated, hand-written
+walkthrough tickets built to showcase specific triage scenarios (critical outages, billing
+disputes, churn risk, etc.) — not sampled from the Kaggle file.
+
+This is a learning exercise — TechFlow is a fictional company — but the Kaggle data is real
+and the tool is built to work on any CSV of support tickets with similar structure.
 
 ## Industry Case Study Reference & Influences
 
@@ -200,7 +209,7 @@ Get a single ticket classified and displayed correctly before scaling to the ful
   - **AI-Assisted Draft Responses**: On-demand AI draft response generation inside expanded ticket views with one-click copy functionality.
   - **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
   - **Queue Management**: One-click queue reset to return to clean upload state.
-- **Demo Datasets**: Includes Kaggle support ticket benchmark dataset (10 tickets) and a scalable 138-ticket sample CSV (`data/sample_138_tickets.csv`) for demonstration.
+- **Demo Datasets**: One-click curated walkthrough (10 hand-authored demo tickets), a synthetic 250-ticket sample CSV (`data/sample_250_tickets.csv`) for volume testing, and the real Kaggle dataset (`data/customer_support_tickets.csv`, ~8,469 rows) for testing against authentic ticket text.
 
 ---
 

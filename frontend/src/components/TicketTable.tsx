@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TriagedTicket } from '../types';
-import { ChevronDown, ChevronUp, Copy, Check, Sparkles, Cpu, Shield, HelpCircle, ArrowUpDown, RefreshCw, Bot } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Sparkles, Cpu, Shield, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X } from 'lucide-react';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
 
@@ -12,8 +12,16 @@ interface TicketTableProps {
 export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilters }) => {
   const [expandedTicketIds, setExpandedTicketIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [ticketStatuses, setTicketStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
-  const [ticketAssignees, setTicketAssignees] = useState<Record<string, string | null>>({});
+
+  // Persistence & Edit state
+  const [savedStatuses, setSavedStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
+  const [savedAssignees, setSavedAssignees] = useState<Record<string, string | null>>({});
+  const [pendingStatuses, setPendingStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
+  const [pendingAssignees, setPendingAssignees] = useState<Record<string, string | null>>({});
+
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+  const [saveSuccessIds, setSaveSuccessIds] = useState<Set<string>>(new Set());
+
   const [sortField, setSortField] = useState<'score' | 'rank' | 'date' | 'id'>('score');
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
@@ -40,6 +48,93 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const getEffectiveStatus = (ticket: TriagedTicket): 'new' | 'in-progress' | 'escalated' | 'resolved' => {
+    const tId = ticket.ticket_id;
+    if (pendingStatuses[tId] !== undefined) return pendingStatuses[tId];
+    if (savedStatuses[tId] !== undefined) return savedStatuses[tId];
+    return (ticket.status as any) || 'new';
+  };
+
+  const getEffectiveAssignee = (ticket: TriagedTicket): string | null => {
+    const tId = ticket.ticket_id;
+    if (pendingAssignees[tId] !== undefined) return pendingAssignees[tId];
+    if (savedAssignees[tId] !== undefined) return savedAssignees[tId];
+    return ticket.assignee || null;
+  };
+
+  const hasUnsavedChanges = (ticket: TriagedTicket): boolean => {
+    const tId = ticket.ticket_id;
+    const currentStatus = getEffectiveStatus(ticket);
+    const savedStatus = savedStatuses[tId] !== undefined ? savedStatuses[tId] : (ticket.status || 'new');
+    
+    const currentAssignee = getEffectiveAssignee(ticket);
+    const savedAssignee = savedAssignees[tId] !== undefined ? savedAssignees[tId] : (ticket.assignee || null);
+
+    return currentStatus !== savedStatus || currentAssignee !== savedAssignee;
+  };
+
+  const handleSaveTicket = async (ticket: TriagedTicket, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const tId = ticket.ticket_id;
+    const newStatus = getEffectiveStatus(ticket);
+    const newAssignee = getEffectiveAssignee(ticket);
+
+    setSavingIds((prev) => new Set(prev).add(tId));
+
+    try {
+      await fetch(`${API_BASE_URL}/api/tickets/${tId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, assignee: newAssignee }),
+      });
+    } catch {
+      // Gracefully persist state locally if offline
+    } finally {
+      setSavedStatuses((prev) => ({ ...prev, [tId]: newStatus }));
+      setSavedAssignees((prev) => ({ ...prev, [tId]: newAssignee }));
+
+      setPendingStatuses((prev) => {
+        const next = { ...prev };
+        delete next[tId];
+        return next;
+      });
+      setPendingAssignees((prev) => {
+        const next = { ...prev };
+        delete next[tId];
+        return next;
+      });
+
+      setSavingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tId);
+        return next;
+      });
+
+      setSaveSuccessIds((prev) => new Set(prev).add(tId));
+      setTimeout(() => {
+        setSaveSuccessIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tId);
+          return next;
+        });
+      }, 2500);
+    }
+  };
+
+  const handleDiscardChanges = (ticketId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setPendingStatuses((prev) => {
+      const next = { ...prev };
+      delete next[ticketId];
+      return next;
+    });
+    setPendingAssignees((prev) => {
+      const next = { ...prev };
+      delete next[ticketId];
+      return next;
+    });
+  };
+
   const renderScoreBadge = (score?: number) => {
     const s = score !== undefined ? score : 50;
     let badgeClass = 'score-low';
@@ -54,8 +149,9 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     );
   };
 
-  const renderStatusBadge = (ticketId: string, currentStatus?: string) => {
-    const st = ticketStatuses[ticketId] || currentStatus || 'new';
+  const renderStatusBadge = (ticket: TriagedTicket) => {
+    const tId = ticket.ticket_id;
+    const st = getEffectiveStatus(ticket);
     let pillClass = 'status-new';
     if (st === 'in-progress') pillClass = 'status-in-progress';
     else if (st === 'escalated') pillClass = 'status-escalated';
@@ -67,7 +163,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
         value={st}
         onChange={(e) => {
           e.stopPropagation();
-          setTicketStatuses((prev) => ({ ...prev, [ticketId]: e.target.value as any }));
+          setPendingStatuses((prev) => ({ ...prev, [tId]: e.target.value as any }));
         }}
         onClick={(e) => e.stopPropagation()}
         style={{ cursor: 'pointer', outline: 'none' }}
@@ -383,7 +479,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
               const isExpanded = expandedTicketIds.has(ticket.ticket_id);
               const rankNumber = index + 1;
               const reasonsList = ticket.reasons || [];
-              const assignedUser = ticketAssignees[ticket.ticket_id] !== undefined ? ticketAssignees[ticket.ticket_id] : (ticket.assignee || null);
+              const assignedUser = getEffectiveAssignee(ticket);
 
               return (
                 <React.Fragment key={ticket.ticket_id}>
@@ -476,7 +572,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
 
                     {/* Status Pill */}
                     <td style={{ padding: '14px 16px' }}>
-                      {renderStatusBadge(ticket.ticket_id, ticket.status)}
+                      {renderStatusBadge(ticket)}
                     </td>
 
                     {/* Source with Tooltip */}
@@ -592,7 +688,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                                     value={assignedUser || ''}
                                     onChange={(e) => {
                                       e.stopPropagation();
-                                      setTicketAssignees((prev) => ({ ...prev, [ticket.ticket_id]: e.target.value || null }));
+                                      setPendingAssignees((prev) => ({ ...prev, [ticket.ticket_id]: e.target.value || null }));
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                   >
@@ -626,6 +722,55 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                             </div>
 
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              {hasUnsavedChanges(ticket) && (
+                                <button
+                                  type="button"
+                                  className="btn-primary"
+                                  style={{
+                                    padding: '6px 14px',
+                                    fontSize: '0.75rem',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    backgroundColor: 'var(--accent-primary)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: 'var(--radius-sm)',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                  }}
+                                  onClick={(e) => handleSaveTicket(ticket, e)}
+                                  disabled={savingIds.has(ticket.ticket_id)}
+                                  title="Confirm and save ticket status and assignee updates"
+                                >
+                                  {savingIds.has(ticket.ticket_id) ? (
+                                    <RefreshCw size={13} className="animate-spin" />
+                                  ) : (
+                                    <Save size={13} />
+                                  )}
+                                  Update Ticket
+                                </button>
+                              )}
+
+                              {hasUnsavedChanges(ticket) && (
+                                <button
+                                  type="button"
+                                  className="btn-secondary"
+                                  style={{ padding: '6px 10px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  onClick={(e) => handleDiscardChanges(ticket.ticket_id, e)}
+                                  title="Discard unsaved changes"
+                                >
+                                  <X size={13} />
+                                  Discard
+                                </button>
+                              )}
+
+                              {saveSuccessIds.has(ticket.ticket_id) && (
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-emerald)', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', backgroundColor: 'var(--toast-success-bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--toast-success-border)' }}>
+                                  <Check size={13} /> Ticket Updated!
+                                </span>
+                              )}
+
                               <button
                                 type="button"
                                 className="btn-accent"

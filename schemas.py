@@ -55,3 +55,9 @@ class GenerateResponseOutput(BaseModel):
     suggested_response: str
     source: str  # "llm" or "template"
 
+
+class UpdateTicketRequest(BaseModel):
+    status: Literal["new", "in-progress", "escalated", "resolved"] | None = None
+    assignee: str | None = None
+
+

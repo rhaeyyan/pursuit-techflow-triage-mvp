@@ -1,5 +1,7 @@
 # TechFlow Support Queue
 
+![TechFlow Support Queue](screenshot/TechFlow-Support.png)
+
 **Stop triaging tickets by hand. Start responding to customers.**
 
 Support teams at mid-size SaaS companies spend the first hour of every morning reading through
@@ -39,9 +41,13 @@ Given a batch of incoming support tickets (as a CSV upload), TechFlow Support Qu
    each one first.
 5. **Drafts AI customer responses** -- enables specialists to generate, review, and copy AI-driven or template-backed email response drafts for any ticket with one click.
 
+![Batch CSV Ingestion & Urgency Overview](screenshot/Dashboard.png)
+
 Jordan uploads the morning's ticket export, and the app gives back a prioritized, categorized
 table that replaces the 90-minute manual sort with something the team can act on immediately.
 Filters let Jordan drill into a specific category or urgency level.
+
+![Prioritized Ticket Queue & AI Response Drafting](screenshot/Tickets.png)
 
 ## How it decides what's urgent
 

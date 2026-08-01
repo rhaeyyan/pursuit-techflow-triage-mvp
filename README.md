@@ -104,26 +104,30 @@ The diagram below illustrates the end-to-end execution flow of TechFlow Support 
 flowchart TD
     UserCSV["Customer Support Tickets (CSV Upload)"] --> CSVParser["CSV Header Normalization & Ingestion"]
 
-    subgraph Pipeline ["Phase 1: Ingestion, Classification & Sorting"]
+    subgraph Pipeline ["Phase 1: Ingestion, PII Scrubbing, Classification & Scoring"]
         direction TB
-        CSVParser --> RuleEngineCheck{"Match Keyword Rules?"}
+        CSVParser --> PIIScrubber["Deterministic PII Anonymization<br/>(Redacts Emails, IPs, Cards & Keys)"]
+        PIIScrubber --> RuleEngineCheck{"Match Keyword Rules?"}
         
-        RuleEngineCheck -- "YES (Keyword Match)" --> RuleResult["Rule Engine Classification<br/>(Urgency: 1-4, Category)"]
+        RuleEngineCheck -- "YES (Keyword Match)" --> RuleResult["Rule Engine Classification<br/>(Urgency Tier, Category & Sub-Category)"]
         RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Configured?"}
         
         CheckLLMConfig -- "YES (Groq / Gemini)" --> LLMClassify["Cloud LLM Classification<br/>(Structured JSON Output)"]
         CheckLLMConfig -- "NO (Offline)" --> DefaultFallback["Safe Default Fallback<br/>(Category: general, Urgency: medium)"]
         
-        RuleResult --> PrioritySort["Sorting Engine<br/>(Rank by Urgency Score & Timestamp)"]
-        LLMClassify --> PrioritySort
-        DefaultFallback --> PrioritySort
-        
-        PrioritySort --> RenderUI["React SPA Queue Table & Filters"]
+        RuleResult --> MultiTagging["Taxonomy & Domain Tagging<br/>(Sub-Category & Multi-Label Tags)"]
+        LLMClassify --> MultiTagging
+        DefaultFallback --> MultiTagging
+
+        MultiTagging --> PrioritySort["Multi-Factor Scoring Engine<br/>(0-100 Priority Score & Channel Risk)"]
+        PrioritySort --> TrendEngine["Unsupervised Trend Discovery<br/>(N-Gram Spike Cluster Extractor)"]
+        TrendEngine --> RenderUI["React SPA Queue Table, Filters & Trend Banner"]
     end
 
-    subgraph Drafting ["Phase 2: Customer Response Generation"]
+    subgraph Workflow ["Phase 2: Response Generation & Workflow Management"]
         direction TB
-        RenderUI -- "User Clicks 'Generate Draft'" --> CheckDraftLLM{"LLM API Key Active?"}
+        RenderUI -- "User Clicks 'Draft AI Response'" --> CheckDraftLLM{"LLM API Key Active?"}
+        RenderUI -- "User Updates Status / Assignee" --> PatchUpdate["Workflow Status & Specialist Assignment<br/>(PATCH /api/tickets/id)"]
         
         CheckDraftLLM -- "YES" --> LLMResponseGen["Generate AI Customer Email Draft<br/>(Cloud LLM: Groq Gemma / Gemini)"]
         CheckDraftLLM -- "NO" --> TemplateDraft["Smart Template Response Generator<br/>(Deterministic Metadata Draft)"]
@@ -133,9 +137,9 @@ flowchart TD
     end
 
     class UserCSV,DisplayDraft inputOutput;
-    class CSVParser,RuleResult,DefaultFallback,PrioritySort,RenderUI,TemplateDraft deterministic;
+    class CSVParser,PIIScrubber,RuleResult,MultiTagging,DefaultFallback,PrioritySort,TrendEngine,RenderUI,TemplateDraft,PatchUpdate deterministic;
     class LLMClassify,LLMResponseGen aiDomain;
-    class RuleEngineCheck,CheckLLMConfig,CheckDraftLLM decision;
+    class RuleEngineCheck,CheckDraftLLM,CheckLLMConfig decision;
 
     classDef deterministic fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
     classDef aiDomain fill:#3b0764,stroke:#c084fc,stroke-width:2px,color:#f8fafc;

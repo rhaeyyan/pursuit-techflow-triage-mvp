@@ -1,4 +1,6 @@
-# Pursuit: /cycle-02/week-03-and-04/support-specialist-mvp
+# Pursuit: support-specialist-mvp
+
+## /cycle-02/week-03-and-04/
 
 ![TechFlow Support Queue](screenshot/TechFlow-Support.png)
 

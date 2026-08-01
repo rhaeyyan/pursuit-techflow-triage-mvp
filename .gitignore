@@ -38,6 +38,10 @@ dist/
 dist-ssr/
 *.local
 
+# Playwright e2e artifacts
+frontend/test-results/
+frontend/playwright-report/
+
 # Environment & IDE
 .env
 .env.local

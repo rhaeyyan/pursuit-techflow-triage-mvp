@@ -121,11 +121,11 @@ flowchart LR
         CSVParser("CSV Header Normalization<br/>& Ingestion") --> PIIScrubber("Deterministic PII Anonymization<br/>(Redacts Emails, IPs, Cards & Keys)")
         PIIScrubber --> RuleEngineCheck{"Match Keyword Rules?"}
         
-        RuleEngineCheck == "YES (Match)" ==> RuleResult("Rule Engine Classification<br/>(Urgency Tier, Category)")
-        RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Configured?"}
+        RuleEngineCheck ==>|"YES (Match)"| RuleResult("Rule Engine Classification<br/>(Urgency Tier, Category)")
+        RuleEngineCheck -->|"NO (Unmatched)"| CheckLLMConfig{"LLM Configured?"}
         
-        CheckLLMConfig -- "YES (Cloud)" --> LLMClassify{{"Cloud LLM Classification<br/>(Structured JSON Output)"}}
-        CheckLLMConfig -. "NO (Offline)" .-> DefaultFallback("Safe Default Fallback<br/>(general, medium)")
+        CheckLLMConfig -->|"YES (Cloud)"| LLMClassify{{"Cloud LLM Classification<br/>(Structured JSON Output)"}}
+        CheckLLMConfig -.->|"NO (Offline)"| DefaultFallback("Safe Default Fallback<br/>(general, medium)")
         
         RuleResult ==> MultiTagging("Taxonomy & Domain Tagging<br/>(Sub-Category & Multi-Label)")
         LLMClassify --> MultiTagging
@@ -138,11 +138,11 @@ flowchart LR
 
     subgraph Phase2 ["Phase 2: Response Generation & Workflow"]
         direction LR
-        RenderUI -. "User Updates Status" .-> PatchUpdate("Workflow Status & Assignee<br/>(PATCH /api/tickets/id)")
-        RenderUI -- "Clicks 'Draft AI Response'" --> CheckDraftLLM{"LLM API Key Active?"}
+        RenderUI -.->|"User Updates Status"| PatchUpdate("Workflow Status & Assignee<br/>(PATCH /api/tickets/id)")
+        RenderUI -->|"Clicks 'Draft AI Response'"| CheckDraftLLM{"LLM API Key Active?"}
         
-        CheckDraftLLM -- "YES" --> LLMResponseGen{{"Generate AI Customer Email Draft<br/>(Cloud LLM)"}}
-        CheckDraftLLM -. "NO" .-> TemplateDraft("Smart Template Generator<br/>(Deterministic Draft)")
+        CheckDraftLLM -->|"YES"| LLMResponseGen{{"Generate AI Customer Email Draft<br/>(Cloud LLM)"}}
+        CheckDraftLLM -.->|"NO"| TemplateDraft("Smart Template Generator<br/>(Deterministic Draft)")
         
         LLMResponseGen --> DisplayDraft[\"Customer Response<br/>Draft Interface"\]
         TemplateDraft -.-> DisplayDraft

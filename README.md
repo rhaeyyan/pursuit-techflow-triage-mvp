@@ -112,12 +112,12 @@ TechFlow Support Queue's architecture incorporates core insights from the indust
 The diagram below illustrates the end-to-end execution flow of TechFlow Support Queue, explicitly distinguishing between the **Deterministic Domain** (100% predictable Python logic & React state) and the **LLM/AI Domain** (optional cloud AI generation via Groq / Gemini):
 
 ```mermaid
-flowchart LR
+flowchart TD
     %% Inputs 
     UserCSV[\"Customer Support Tickets<br/>(CSV Upload)"\] --> CSVParser
 
     subgraph Phase1 ["Phase 1: Ingestion, Scrubbing, Classification & Scoring"]
-        direction LR
+        direction TD
         CSVParser("CSV Header Normalization<br/>& Ingestion") --> PIIScrubber("Deterministic PII Anonymization<br/>(Redacts Emails, IPs, Cards & Keys)")
         PIIScrubber --> RuleEngineCheck{"Match Keyword Rules?"}
         
@@ -137,7 +137,7 @@ flowchart LR
     end
 
     subgraph Phase2 ["Phase 2: Response Generation & Workflow"]
-        direction LR
+        direction TD
         RenderUI -.->|"User Updates Status"| PatchUpdate("Workflow Status & Assignee<br/>(PATCH /api/tickets/id)")
         RenderUI -->|"Clicks 'Draft AI Response'"| CheckDraftLLM{"LLM API Key Active?"}
         

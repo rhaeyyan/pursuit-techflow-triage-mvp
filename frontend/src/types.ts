@@ -14,6 +14,10 @@ export interface TriagedTicket {
   issue_type: IssueType | string;
   urgency: UrgencyLevel;
   urgency_score: number; // 4: critical, 3: high, 2: medium, 1: low
+  score?: number; // 0 to 100 numerical urgency score
+  reasons?: string[]; // Explainable triage reasons/signals
+  status?: 'new' | 'in-progress' | 'escalated' | 'resolved';
+  assignee?: string | null;
   confidence_source: ConfidenceSource | string;
 }
 

@@ -29,6 +29,10 @@ class TriagedTicket(BaseModel):
     issue_type: str
     urgency: str
     urgency_score: int = Field(ge=1, le=4)
+    score: int = Field(default=50, ge=0, le=100)
+    reasons: list[str] = Field(default_factory=list)
+    status: Literal["new", "in-progress", "escalated", "resolved"] = "new"
+    assignee: str | None = None
     confidence_source: Literal["rule", "llm", "fallback"]
 
 

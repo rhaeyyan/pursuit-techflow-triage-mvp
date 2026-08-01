@@ -12,7 +12,9 @@ interface TicketTableProps {
 export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilters }) => {
   const [expandedTicketIds, setExpandedTicketIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<'rank' | 'date' | 'id'>('rank');
+  const [ticketStatuses, setTicketStatuses] = useState<Record<string, 'new' | 'in-progress' | 'escalated' | 'resolved'>>({});
+  const [ticketAssignees, setTicketAssignees] = useState<Record<string, string | null>>({});
+  const [sortField, setSortField] = useState<'score' | 'rank' | 'date' | 'id'>('score');
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
   const [generatedResponses, setGeneratedResponses] = useState<Record<string, { text: string; source: string }>>({});
@@ -36,6 +38,46 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     navigator.clipboard.writeText(text);
     setCopiedId(text);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const renderScoreBadge = (score?: number) => {
+    const s = score !== undefined ? score : 50;
+    let badgeClass = 'score-low';
+    if (s >= 80) badgeClass = 'score-critical';
+    else if (s >= 60) badgeClass = 'score-high';
+    else if (s >= 40) badgeClass = 'score-medium';
+
+    return (
+      <span className={`score-badge ${badgeClass}`} title={`Multi-factor priority score: ${s}/100`}>
+        {s}
+      </span>
+    );
+  };
+
+  const renderStatusBadge = (ticketId: string, currentStatus?: string) => {
+    const st = ticketStatuses[ticketId] || currentStatus || 'new';
+    let pillClass = 'status-new';
+    if (st === 'in-progress') pillClass = 'status-in-progress';
+    else if (st === 'escalated') pillClass = 'status-escalated';
+    else if (st === 'resolved') pillClass = 'status-resolved';
+
+    return (
+      <select
+        className={`status-pill ${pillClass}`}
+        value={st}
+        onChange={(e) => {
+          e.stopPropagation();
+          setTicketStatuses((prev) => ({ ...prev, [ticketId]: e.target.value as any }));
+        }}
+        onClick={(e) => e.stopPropagation()}
+        style={{ cursor: 'pointer', outline: 'none' }}
+      >
+        <option value="new">New</option>
+        <option value="in-progress">In Progress</option>
+        <option value="escalated">Escalated</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    );
   };
 
   const handleGenerateResponse = async (ticket: TriagedTicket, e: React.MouseEvent) => {
@@ -119,17 +161,17 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
   const renderUrgencyBadge = (urgency: string, score: number) => {
     const norm = urgency.toLowerCase();
     let badgeClass = 'badge-low';
-    let label = `Low (${score || 1})`;
+    let label = `Low`;
 
     if (norm === 'critical' || score === 4) {
       badgeClass = 'badge-critical';
-      label = `Critical (${score || 4})`;
+      label = `Critical`;
     } else if (norm === 'high' || score === 3) {
       badgeClass = 'badge-high';
-      label = `High (${score || 3})`;
+      label = `High`;
     } else if (norm === 'medium' || score === 2) {
       badgeClass = 'badge-medium';
-      label = `Medium (${score || 2})`;
+      label = `Medium`;
     }
 
     return (
@@ -205,11 +247,16 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     if (sortField === 'id') {
       return sortAsc ? a.ticket_id.localeCompare(b.ticket_id) : b.ticket_id.localeCompare(a.ticket_id);
     }
+    if (sortField === 'score') {
+      const sA = a.score !== undefined ? a.score : a.urgency_score * 25;
+      const sB = b.score !== undefined ? b.score : b.urgency_score * 25;
+      return sortAsc ? sB - sA : sA - sB;
+    }
     const scoreDiff = b.urgency_score - a.urgency_score;
     return sortAsc ? scoreDiff : -scoreDiff;
   });
 
-  const toggleSort = (field: 'rank' | 'date' | 'id') => {
+  const toggleSort = (field: 'score' | 'rank' | 'date' | 'id') => {
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -293,7 +340,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
               }}
             >
               <th
-                style={{ padding: '14px 20px', width: '64px', cursor: 'pointer', userSelect: 'none' }}
+                style={{ padding: '14px 16px', width: '56px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('rank')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -301,32 +348,42 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                 </div>
               </th>
               <th
-                style={{ padding: '14px 16px', width: '120px', cursor: 'pointer', userSelect: 'none' }}
+                style={{ padding: '14px 16px', width: '70px', cursor: 'pointer', userSelect: 'none' }}
+                onClick={() => toggleSort('score')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  Score <ArrowUpDown size={11} style={{ opacity: sortField === 'score' ? 1 : 0.4 }} />
+                </div>
+              </th>
+              <th
+                style={{ padding: '14px 16px', width: '110px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('id')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Ticket ID <ArrowUpDown size={11} style={{ opacity: sortField === 'id' ? 1 : 0.4 }} />
                 </div>
               </th>
-              <th style={{ padding: '14px 16px' }}>Subject</th>
-              <th style={{ padding: '14px 16px', width: '130px' }}>Category</th>
-              <th style={{ padding: '14px 16px', width: '130px' }}>Urgency</th>
-              <th style={{ padding: '14px 16px', width: '145px' }}>Source</th>
+              <th style={{ padding: '14px 16px' }}>Subject & Triage Signals</th>
+              <th style={{ padding: '14px 16px', width: '120px' }}>Category</th>
+              <th style={{ padding: '14px 16px', width: '100px' }}>Status</th>
+              <th style={{ padding: '14px 16px', width: '125px' }}>Source</th>
               <th
-                style={{ padding: '14px 16px', width: '135px', cursor: 'pointer', userSelect: 'none' }}
+                style={{ padding: '14px 16px', width: '125px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('date')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Created <ArrowUpDown size={11} style={{ opacity: sortField === 'date' ? 1 : 0.4 }} />
                 </div>
               </th>
-              <th style={{ padding: '14px 20px', width: '48px' }}></th>
+              <th style={{ padding: '14px 16px', width: '40px' }}></th>
             </tr>
           </thead>
           <tbody>
             {sortedTickets.map((ticket, index) => {
               const isExpanded = expandedTicketIds.has(ticket.ticket_id);
               const rankNumber = index + 1;
+              const reasonsList = ticket.reasons || [];
+              const assignedUser = ticketAssignees[ticket.ticket_id] !== undefined ? ticketAssignees[ticket.ticket_id] : (ticket.assignee || null);
 
               return (
                 <React.Fragment key={ticket.ticket_id}>
@@ -346,13 +403,18 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                     {/* Rank */}
                     <td
                       style={{
-                        padding: '14px 20px',
+                        padding: '14px 16px',
                         fontWeight: 700,
                         color: 'var(--text-muted)',
                         fontSize: '0.825rem',
                       }}
                     >
                       #{rankNumber}
+                    </td>
+
+                    {/* Numerical Score */}
+                    <td style={{ padding: '14px 16px' }}>
+                      {renderScoreBadge(ticket.score)}
                     </td>
 
                     {/* Ticket ID */}
@@ -368,13 +430,13 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                       {ticket.ticket_id}
                     </td>
 
-                    {/* Subject */}
+                    {/* Subject & Reason Tags */}
                     <td
                       style={{
                         padding: '14px 16px',
                         fontWeight: 500,
                         color: 'var(--text-primary)',
-                        maxWidth: '340px',
+                        maxWidth: '360px',
                       }}
                     >
                       <div
@@ -382,11 +444,29 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
+                          fontWeight: 600,
                         }}
                         title={ticket.subject}
                       >
                         {ticket.subject}
                       </div>
+
+                      {/* Triage Signals / Reasons Badges */}
+                      {reasonsList.length > 0 && (
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                          {reasonsList.slice(0, 2).map((reason, rIdx) => {
+                            const isUrgentReason = reason.toLowerCase().includes('churn') || reason.toLowerCase().includes('legal') || reason.toLowerCase().includes('outage') || reason.toLowerCase().includes('live');
+                            return (
+                              <span key={rIdx} className={`reason-tag ${isUrgentReason ? 'reason-tag-urgent' : ''}`}>
+                                {reason}
+                              </span>
+                            );
+                          })}
+                          {reasonsList.length > 2 && (
+                            <span className="reason-tag">+{reasonsList.length - 2} more</span>
+                          )}
+                        </div>
+                      )}
                     </td>
 
                     {/* Category */}
@@ -394,9 +474,9 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                       <span className="badge badge-category">{formatIssueType(ticket.issue_type)}</span>
                     </td>
 
-                    {/* Urgency */}
+                    {/* Status Pill */}
                     <td style={{ padding: '14px 16px' }}>
-                      {renderUrgencyBadge(ticket.urgency, ticket.urgency_score)}
+                      {renderStatusBadge(ticket.ticket_id, ticket.status)}
                     </td>
 
                     {/* Source with Tooltip */}
@@ -418,7 +498,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                     {/* Expand */}
                     <td
                       style={{
-                        padding: '14px 20px',
+                        padding: '14px 16px',
                         textAlign: 'center',
                         color: 'var(--text-muted)',
                       }}
@@ -470,10 +550,11 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                               <div
                                 style={{
                                   display: 'flex',
-                                  gap: '20px',
+                                  gap: '16px',
                                   fontSize: '0.8rem',
                                   color: 'var(--text-secondary)',
                                   flexWrap: 'wrap',
+                                  alignItems: 'center',
                                 }}
                               >
                                 {ticket.customer_id && (
@@ -493,12 +574,55 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                                   </span>
                                 )}
                                 <span>
-                                  Urgency Score:{' '}
+                                  Score:{' '}
                                   <strong style={{ color: 'var(--text-primary)' }}>
-                                    {ticket.urgency_score} / 4
+                                    {ticket.score !== undefined ? ticket.score : ticket.urgency_score * 25} / 100
                                   </strong>
                                 </span>
+
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  Tier: {renderUrgencyBadge(ticket.urgency, ticket.urgency_score)}
+                                </span>
+
+                                <span>
+                                  Assignee:{' '}
+                                  <select
+                                    className="btn-secondary"
+                                    style={{ padding: '2px 6px', fontSize: '0.75rem', marginLeft: '4px' }}
+                                    value={assignedUser || ''}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      setTicketAssignees((prev) => ({ ...prev, [ticket.ticket_id]: e.target.value || null }));
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <option value="">Unassigned</option>
+                                    <option value="Jordan">Jordan M.</option>
+                                    <option value="Priya">Priya S.</option>
+                                    <option value="Marcus">Marcus K.</option>
+                                    <option value="Dana">Dana R.</option>
+                                  </select>
+                                </span>
                               </div>
+
+                              {/* Full Triage Reasons Breakdown */}
+                              {reasonsList.length > 0 && (
+                                <div style={{ marginTop: '10px' }}>
+                                  <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                                    Triage Signals & Risk Factors:
+                                  </span>
+                                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                    {reasonsList.map((reason, rIdx) => {
+                                      const isUrgentReason = reason.toLowerCase().includes('churn') || reason.toLowerCase().includes('legal') || reason.toLowerCase().includes('outage') || reason.toLowerCase().includes('live');
+                                      return (
+                                        <span key={rIdx} className={`reason-tag ${isUrgentReason ? 'reason-tag-urgent' : ''}`}>
+                                          {reason}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>

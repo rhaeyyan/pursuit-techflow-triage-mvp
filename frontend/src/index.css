@@ -708,3 +708,95 @@ button:disabled {
     padding: 16px 12px 40px 12px;
   }
 }
+
+/* === SCORE & REASON BADGES === */
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: 0.775rem;
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, monospace;
+  letter-spacing: -0.01em;
+}
+
+.score-critical {
+  background-color: var(--critical-bg);
+  color: var(--critical-color);
+  border: 1px solid var(--critical-border);
+}
+
+.score-high {
+  background-color: var(--high-bg);
+  color: var(--high-color);
+  border: 1px solid var(--high-border);
+}
+
+.score-medium {
+  background-color: var(--medium-bg);
+  color: var(--medium-color);
+  border: 1px solid var(--medium-border);
+}
+
+.score-low {
+  background-color: var(--low-bg);
+  color: var(--low-color);
+  border: 1px solid var(--low-border);
+}
+
+.reason-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 0.725rem;
+  font-weight: 600;
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.reason-tag-urgent {
+  background-color: var(--critical-bg);
+  color: var(--critical-color);
+  border-color: var(--critical-border);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.725rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-new {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.status-in-progress {
+  background-color: rgba(234, 88, 12, 0.1);
+  color: #ea580c;
+  border: 1px solid rgba(234, 88, 12, 0.25);
+}
+
+.status-escalated {
+  background-color: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.status-resolved {
+  background-color: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  border: 1px solid rgba(5, 150, 105, 0.25);
+}

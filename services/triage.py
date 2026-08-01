@@ -214,6 +214,82 @@ class DefaultFallbackClassifier:
         return TicketClassification(issue_type="general", urgency="medium")
 
 
+def compute_ticket_score_and_reasons(
+    ticket: TicketInput, issue_type: str, urgency: str, confidence_source: str
+) -> tuple[int, list[str]]:
+    reasons: list[str] = []
+
+    # 1. Base Urgency Score
+    base_scores = {
+        "critical": 65,
+        "high": 50,
+        "medium": 35,
+        "low": 20,
+    }
+    base = base_scores.get(urgency.lower(), 35)
+
+    if issue_type == "billing":
+        reasons.append("Billing inquiry")
+    elif issue_type == "technical":
+        reasons.append("Technical issue")
+    elif issue_type == "account":
+        reasons.append("Account request")
+    elif issue_type == "feature_request":
+        reasons.append("Feature request")
+    else:
+        reasons.append("General inquiry")
+
+    # 2. Text Keyword & Risk Signals
+    text = f"{ticket.subject} {ticket.body}".lower()
+
+    # Churn Risk
+    churn_keywords = ["cancel", "cancellation", "switching", "closing account", "churn", "close my account"]
+    if any(kw in text for kw in churn_keywords):
+        base += 12
+        reasons.append("Churn risk (mentions cancelling)")
+
+    # Legal / Escalation Risk
+    legal_keywords = ["lawyer", "legal", "sue", "attorney", "regulator", "compliance", "unauthorized", "fraud"]
+    if any(kw in text for kw in legal_keywords):
+        base += 12
+        reasons.append("Legal escalation risk")
+
+    # Financial / Refund Risk
+    financial_keywords = ["refund", "double charged", "overcharged", "money owed", "invoice"]
+    if any(kw in text for kw in financial_keywords):
+        base += 8
+        reasons.append("Money owed / refund risk")
+
+    # Data Loss / Outage Risk
+    outage_keywords = ["data loss", "outage", "system down", "500 error", "server down", "can't access"]
+    if any(kw in text for kw in outage_keywords):
+        base += 10
+        reasons.append("Possible data loss or outage")
+
+    # Time-sensitive Language
+    urgent_keywords = ["asap", "urgent", "immediately", "blocker", "emergency"]
+    if any(kw in text for kw in urgent_keywords):
+        base += 5
+        reasons.append("Customer flagged as urgent")
+
+    # 3. Channel Risk Weighting
+    channel = (ticket.channel or "").lower()
+    if channel in ["phone", "call"]:
+        base += 12
+        reasons.append("Live phone — customer is waiting")
+    elif channel == "chat":
+        base += 10
+        reasons.append("Live chat — customer is waiting")
+    elif channel == "social":
+        base += 10
+        reasons.append("Public on social — reputational risk")
+
+    # Cap score between 10 and 100
+    final_score = max(10, min(100, base))
+
+    return final_score, reasons
+
+
 def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
     rule_engine = RuleEngine()
     groq_classifier = GroqClassifier()
@@ -255,7 +331,10 @@ def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
             classification = fallback_classifier.classify(ticket)
             confidence_source = "fallback"
 
-        score = URGENCY_SCORES.get(classification.urgency, 2)
+        score_tier = URGENCY_SCORES.get(classification.urgency, 2)
+        score, reasons = compute_ticket_score_and_reasons(
+            ticket, classification.issue_type, classification.urgency, confidence_source
+        )
 
         triaged.append(
             TriagedTicket(
@@ -267,7 +346,11 @@ def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
                 created_at=ticket.created_at,
                 issue_type=classification.issue_type,
                 urgency=classification.urgency,
-                urgency_score=score,
+                urgency_score=score_tier,
+                score=score,
+                reasons=reasons,
+                status="new",
+                assignee=None,
                 confidence_source=confidence_source,
             )
         )
@@ -279,6 +362,7 @@ def sort_tickets(tickets: list[TriagedTicket]) -> list[TriagedTicket]:
     return sorted(
         tickets,
         key=lambda t: (
+            -t.score,
             -t.urgency_score,
             str(t.created_at) if t.created_at is not None else "",
         ),

@@ -35,7 +35,7 @@ export const DEMO_TICKETS: TriagedTicket[] = [
     score: 92,
     reasons: ['Account request', 'Legal escalation risk', 'Customer flagged as urgent', 'Live chat — customer is waiting'],
     status: 'in-progress',
-    assignee: 'Priya',
+    assignee: 'Sofia',
     updated_at: '2026-07-30T21:45:00Z',
     confidence_source: 'llm',
   },
@@ -54,7 +54,7 @@ export const DEMO_TICKETS: TriagedTicket[] = [
     score: 87,
     reasons: ['Billing inquiry', 'Churn risk (mentions cancelling)', 'Money owed / refund risk', 'Public on social — reputational risk'],
     status: 'new',
-    assignee: 'Marcus',
+    assignee: 'Miguel',
     confidence_source: 'rule',
   },
   {
@@ -86,7 +86,7 @@ export const DEMO_TICKETS: TriagedTicket[] = [
     score: 68,
     reasons: ['Technical issue', 'Money owed / refund risk'],
     status: 'in-progress',
-    assignee: 'Dana',
+    assignee: 'Aisha',
     confidence_source: 'llm',
   },
   {
@@ -150,7 +150,7 @@ export const DEMO_TICKETS: TriagedTicket[] = [
     score: 25,
     reasons: ['General inquiry'],
     status: 'resolved',
-    assignee: 'Priya',
+    assignee: 'Sofia',
     confidence_source: 'rule',
   },
   {

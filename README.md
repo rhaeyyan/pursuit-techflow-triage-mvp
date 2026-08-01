@@ -40,7 +40,7 @@ Given a batch of incoming support tickets (as a CSV upload), TechFlow Support Qu
 4. **Categorizes everything** so the team can route tickets to the right person without reading
    each one first.
 5. **Drafts AI customer responses** -- enables specialists to generate, review, and copy AI-driven or template-backed email response drafts for any ticket with one click.
-6. **Assigns Workflow Status & Specialists** -- tracks ticket progress (`New`, `In Progress`, `Escalated`, `Resolved`) and lets team leads assign tickets to specialists (*Jordan M.*, *Priya S.*, *Marcus K.*, *Dana R.*).
+6. **Assigns Workflow Status & Specialists** -- tracks ticket progress (`New`, `In Progress`, `Escalated`, `Resolved`) and lets team leads assign tickets to specialists (*Jordan M.*, *Sofia R.*, *Miguel T.*, *Aisha B.*).
 
 ![Batch CSV Ingestion & Urgency Overview](screenshot/Dashboard.png)
 
@@ -194,7 +194,7 @@ Get a single ticket classified and displayed correctly before scaling to the ful
   - **Batch CSV Upload & Drag-and-Drop**: Supports arbitrary CSV uploads, custom header alias mapping, and one-click demo data loading.
   - **Prioritized Triage Table**: Ranked ticket queue sorted by $0–100$ priority score, live search, issue category filtering, expandable ticket body previews, and column sorting.
   - **Explainable Triage Badges**: Surfaces explicit reasoning tags (*Churn risk*, *Live phone*, *Legal escalation risk*, *Refund risk*, *Data loss*).
-  - **Workflow Management**: Interactive status badges (`New`, `In Progress`, `Escalated`, `Resolved`) and specialist assignment controls (*Jordan M.*, *Priya S.*, *Marcus K.*, *Dana R.*).
+  - **Workflow Management**: Interactive status badges (`New`, `In Progress`, `Escalated`, `Resolved`) and specialist assignment controls (*Jordan M.*, *Sofia R.*, *Miguel T.*, *Aisha B.*).
   - **AI-Assisted Draft Responses**: On-demand AI draft response generation inside expanded ticket views with one-click copy functionality.
   - **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
   - **Queue Management**: One-click queue reset to return to clean upload state.

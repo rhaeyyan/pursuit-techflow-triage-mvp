@@ -36,6 +36,7 @@ class TriagedTicket(BaseModel):
     reasons: list[str] = Field(default_factory=list)
     status: Literal["new", "in-progress", "escalated", "resolved"] = "new"
     assignee: str | None = None
+    updated_at: datetime | str | None = None
     confidence_source: Literal["rule", "llm", "fallback"]
 
 

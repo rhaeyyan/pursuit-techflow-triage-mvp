@@ -77,11 +77,16 @@ def generate_response_endpoint(request: GenerateResponseRequest):
 from services.trends import detect_emerging_topics
 
 
+from datetime import datetime, timezone
+
+
 @app.patch("/api/tickets/{ticket_id}")
 def update_ticket_endpoint(ticket_id: str, request: UpdateTicketRequest):
+    updated_at = datetime.now(timezone.utc).isoformat()
     return {
         "status": "ok",
         "ticket_id": ticket_id,
+        "updated_at": updated_at,
         "updated_fields": request.model_dump(exclude_unset=True),
         "message": f"Successfully updated ticket {ticket_id}",
     }

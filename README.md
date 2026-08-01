@@ -112,46 +112,49 @@ TechFlow Support Queue's architecture incorporates core insights from the indust
 The diagram below illustrates the end-to-end execution flow of TechFlow Support Queue, explicitly distinguishing between the **Deterministic Domain** (100% predictable Python logic & React state) and the **LLM/AI Domain** (optional cloud AI generation via Groq / Gemini):
 
 ```mermaid
-flowchart TD
-    UserCSV["Customer Support Tickets (CSV Upload)"] --> CSVParser["CSV Header Normalization & Ingestion"]
+flowchart LR
+    %% Inputs 
+    UserCSV[\"Customer Support Tickets<br/>(CSV Upload)"\] --> CSVParser
 
-    subgraph Pipeline ["Phase 1: Ingestion, PII Scrubbing, Classification & Scoring"]
-        direction TB
-        CSVParser --> PIIScrubber["Deterministic PII Anonymization<br/>(Redacts Emails, IPs, Cards & Keys)"]
+    subgraph Phase1 ["Phase 1: Ingestion, Scrubbing, Classification & Scoring"]
+        direction LR
+        CSVParser("CSV Header Normalization<br/>& Ingestion") --> PIIScrubber("Deterministic PII Anonymization<br/>(Redacts Emails, IPs, Cards & Keys)")
         PIIScrubber --> RuleEngineCheck{"Match Keyword Rules?"}
         
-        RuleEngineCheck -- "YES (Keyword Match)" --> RuleResult["Rule Engine Classification<br/>(Urgency Tier, Category & Sub-Category)"]
+        RuleEngineCheck -- "YES (Match)" ==> RuleResult("Rule Engine Classification<br/>(Urgency Tier, Category)")
         RuleEngineCheck -- "NO (Unmatched)" --> CheckLLMConfig{"LLM Configured?"}
         
-        CheckLLMConfig -- "YES (Groq / Gemini)" --> LLMClassify["Cloud LLM Classification<br/>(Structured JSON Output)"]
-        CheckLLMConfig -- "NO (Offline)" --> DefaultFallback["Safe Default Fallback<br/>(Category: general, Urgency: medium)"]
+        CheckLLMConfig -- "YES (Cloud)" --> LLMClassify{{"Cloud LLM Classification<br/>(Structured JSON Output)"}}
+        CheckLLMConfig -- "NO (Offline)" -.-> DefaultFallback("Safe Default Fallback<br/>(general, medium)")
         
-        RuleResult --> MultiTagging["Taxonomy & Domain Tagging<br/>(Sub-Category & Multi-Label Tags)"]
+        RuleResult ==> MultiTagging("Taxonomy & Domain Tagging<br/>(Sub-Category & Multi-Label)")
         LLMClassify --> MultiTagging
-        DefaultFallback --> MultiTagging
+        DefaultFallback -.-> MultiTagging
 
-        MultiTagging --> PrioritySort["Multi-Factor Scoring Engine<br/>(0-100 Priority Score & Channel Risk)"]
-        PrioritySort --> TrendEngine["Unsupervised Trend Discovery<br/>(N-Gram Spike Cluster Extractor)"]
-        TrendEngine --> RenderUI["React SPA Queue Table, Filters & Trend Banner"]
+        MultiTagging ==> PrioritySort("Multi-Factor Scoring Engine<br/>(0-100 Priority Score & Risk)")
+        PrioritySort ==> TrendEngine("Unsupervised Trend Discovery<br/>(N-Gram Spike Cluster Extractor)")
+        TrendEngine ==> RenderUI(["React SPA Queue Table,<br/>Filters & Trend Banner"])
     end
 
-    subgraph Workflow ["Phase 2: Response Generation & Workflow Management"]
-        direction TB
-        RenderUI -- "User Clicks 'Draft AI Response'" --> CheckDraftLLM{"LLM API Key Active?"}
-        RenderUI -- "User Updates Status / Assignee" --> PatchUpdate["Workflow Status & Specialist Assignment<br/>(PATCH /api/tickets/id)"]
+    subgraph Phase2 ["Phase 2: Response Generation & Workflow"]
+        direction LR
+        RenderUI -- "User Updates Status" -.-> PatchUpdate("Workflow Status & Assignee<br/>(PATCH /api/tickets/id)")
+        RenderUI -- "Clicks 'Draft AI Response'" --> CheckDraftLLM{"LLM API Key Active?"}
         
-        CheckDraftLLM -- "YES" --> LLMResponseGen["Generate AI Customer Email Draft<br/>(Cloud LLM: Groq Gemma / Gemini)"]
-        CheckDraftLLM -- "NO" --> TemplateDraft["Smart Template Response Generator<br/>(Deterministic Metadata Draft)"]
+        CheckDraftLLM -- "YES" --> LLMResponseGen{{"Generate AI Customer Email Draft<br/>(Cloud LLM)"}}
+        CheckDraftLLM -- "NO" -.-> TemplateDraft("Smart Template Generator<br/>(Deterministic Draft)")
         
-        LLMResponseGen --> DisplayDraft["Customer Response Draft Interface"]
-        TemplateDraft --> DisplayDraft
+        LLMResponseGen --> DisplayDraft[\"Customer Response<br/>Draft Interface"\]
+        TemplateDraft -.-> DisplayDraft
     end
 
+    %% Class Assignments
     class UserCSV,DisplayDraft inputOutput;
     class CSVParser,PIIScrubber,RuleResult,MultiTagging,DefaultFallback,PrioritySort,TrendEngine,RenderUI,TemplateDraft,PatchUpdate deterministic;
     class LLMClassify,LLMResponseGen aiDomain;
     class RuleEngineCheck,CheckDraftLLM,CheckLLMConfig decision;
 
+    %% Styling Definitions
     classDef deterministic fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
     classDef aiDomain fill:#3b0764,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
     classDef decision fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;

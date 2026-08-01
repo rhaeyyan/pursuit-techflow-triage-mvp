@@ -167,12 +167,33 @@ class OllamaClassifier:
     def __init__(
         self,
         endpoint: str | None = None,
-        timeout: float = 3.0,
+        timeout: float = 1.5,
     ):
         self.endpoint = endpoint
         self.timeout = timeout
+        self._checked_availability = False
+        self._is_available = False
+
+    def check_availability(self) -> bool:
+        if self._checked_availability:
+            return self._is_available
+        self._checked_availability = True
+        endpoint = self.endpoint or os.getenv(
+            "OLLAMA_ENDPOINT", "http://localhost:11434/api/generate"
+        )
+        try:
+            # Quick health check to verify if local Ollama daemon is active
+            tags_endpoint = endpoint.rsplit("/", 1)[0] + "/tags"
+            resp = httpx.get(tags_endpoint, timeout=0.3)
+            self._is_available = (resp.status_code == 200)
+        except Exception:
+            self._is_available = False
+        return self._is_available
 
     def classify(self, ticket: TicketInput) -> TicketClassification | None:
+        if not self.check_availability():
+            return None
+
         endpoint = self.endpoint or os.getenv(
             "OLLAMA_ENDPOINT", "http://localhost:11434/api/generate"
         )
@@ -320,8 +341,8 @@ def triage_tickets(tickets: list[TicketInput]) -> list[TriagedTicket]:
             if classification is not None:
                 confidence_source = "llm"
 
-        # Step 4: If LLM_PROVIDER == "ollama" or LLM_PROVIDER == "auto" -> OllamaClassifier
-        if classification is None and provider in ("ollama", "auto"):
+        # Step 4: If LLM_PROVIDER == "ollama" or OLLAMA_ENDPOINT present -> OllamaClassifier
+        if classification is None and (provider == "ollama" or os.getenv("OLLAMA_ENDPOINT")):
             classification = ollama_classifier.classify(ticket)
             if classification is not None:
                 confidence_source = "llm"

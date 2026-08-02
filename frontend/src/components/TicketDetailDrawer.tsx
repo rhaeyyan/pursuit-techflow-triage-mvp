@@ -37,6 +37,15 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
   const [selectedTone, setSelectedTone] = useState<string>('formal');
   const [copied, setCopied] = useState(false);
   const [showMessageSentToast, setShowMessageSentToast] = useState(false);
+  const [editedDraftText, setEditedDraftText] = useState<string>('');
+
+  useEffect(() => {
+    if (generatedResponse?.text) {
+      setEditedDraftText(generatedResponse.text);
+    } else {
+      setEditedDraftText('');
+    }
+  }, [generatedResponse]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -63,8 +72,8 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
   if (!isOpen || !ticket) return null;
 
   const handleCopyResponse = () => {
-    if (generatedResponse?.text) {
-      navigator.clipboard.writeText(generatedResponse.text);
+    if (editedDraftText) {
+      navigator.clipboard.writeText(editedDraftText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -466,23 +475,30 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
 
                 {generatedResponse ? (
                   <div>
-                    <div
+                    <textarea
+                      data-testid="ai-draft-textarea"
+                      aria-label="Editable AI draft response"
+                      value={editedDraftText}
+                      onChange={(e) => setEditedDraftText(e.target.value)}
+                      rows={5}
                       style={{
+                        width: '100%',
+                        minHeight: '120px',
                         backgroundColor: 'var(--bg-card)',
-                        border: '1px solid var(--border-subtle)',
+                        border: '1px solid var(--border-primary)',
                         borderRadius: 'var(--radius-sm)',
                         padding: '12px',
                         fontSize: '0.85rem',
+                        fontFamily: 'inherit',
                         lineHeight: 1.5,
                         color: 'var(--text-primary)',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word',
                         marginBottom: '10px',
+                        resize: 'vertical',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                       }}
-                    >
-                      {generatedResponse.text}
-                    </div>
+                    />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button

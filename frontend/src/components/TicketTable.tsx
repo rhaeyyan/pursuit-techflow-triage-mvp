@@ -990,6 +990,9 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
             });
           }
         }}
+        onSaveTicket={async (updatedTicket) => {
+          await handleSaveTicket(updatedTicket);
+        }}
       />
 
       {/* Floating Bulk Action Bar */}

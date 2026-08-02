@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TriagedTicket, TicketStatus } from '../types';
-import { X, Sparkles, Copy, Check, Bot, Tag, RefreshCw, User, History, SlidersHorizontal } from 'lucide-react';
+import { X, Sparkles, Copy, Check, Bot, Tag, RefreshCw, User, History, SlidersHorizontal, Send, CheckCircle2 } from 'lucide-react';
 import {
   renderScoreBadge,
   renderUrgencyBadge,
@@ -17,6 +17,7 @@ interface TicketDetailDrawerProps {
   generatedResponse?: { text: string; source: string };
   isGeneratingResponse?: boolean;
   onGenerateResponse: (ticketId: string, tone?: string) => void;
+  onSaveTicket?: (updated: TriagedTicket) => void;
 }
 
 export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
@@ -30,10 +31,12 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
   generatedResponse,
   isGeneratingResponse,
   onGenerateResponse,
+  onSaveTicket,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'customer' | 'audit'>('overview');
   const [selectedTone, setSelectedTone] = useState<string>('formal');
   const [copied, setCopied] = useState(false);
+  const [showMessageSentToast, setShowMessageSentToast] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -53,6 +56,7 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
   useEffect(() => {
     if (isOpen) {
       setActiveTab('overview');
+      setShowMessageSentToast(false);
     }
   }, [ticket?.ticket_id, isOpen]);
 
@@ -63,6 +67,20 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
       navigator.clipboard.writeText(generatedResponse.text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleSendResponse = () => {
+    setShowMessageSentToast(true);
+    if (ticket) {
+      onStatusChange(ticket.ticket_id, 'resolved');
+      if (onSaveTicket) {
+        onSaveTicket({
+          ...ticket,
+          status: 'resolved',
+          updated_at: new Date().toISOString(),
+        });
+      }
     }
   };
 
@@ -252,6 +270,30 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
               aria-labelledby="tab-overview"
               style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
+              {showMessageSentToast && (
+                <div
+                  data-testid="message-sent-toast"
+                  role="status"
+                  aria-live="polite"
+                  style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid var(--accent-emerald)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px 16px',
+                    color: 'var(--accent-emerald)',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                >
+                  <CheckCircle2 size={16} />
+                  <span>Message Sent</span>
+                </div>
+              )}
+
               {/* Metadata Controls Panel */}
               <div
                 style={{
@@ -441,16 +483,37 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
                     >
                       {generatedResponse.text}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={handleCopyResponse}
-                        style={{ padding: '6px 12px', fontSize: '0.775rem', gap: '6px' }}
-                      >
-                        {copied ? <Check size={14} style={{ color: 'var(--accent-emerald)' }} /> : <Copy size={14} />}
-                        {copied ? 'Copied to Clipboard!' : 'Copy Draft'}
-                      </button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={handleCopyResponse}
+                          style={{ padding: '6px 12px', fontSize: '0.775rem', gap: '6px' }}
+                        >
+                          {copied ? <Check size={14} style={{ color: 'var(--accent-emerald)' }} /> : <Copy size={14} />}
+                          {copied ? 'Copied to Clipboard!' : 'Copy Draft'}
+                        </button>
+
+                        <button
+                          type="button"
+                          data-testid="respond-btn"
+                          className="btn-primary"
+                          onClick={handleSendResponse}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.775rem',
+                            gap: '6px',
+                            backgroundColor: 'var(--accent-emerald)',
+                            borderColor: 'var(--accent-emerald)',
+                            color: '#ffffff',
+                          }}
+                        >
+                          <Send size={13} />
+                          Respond
+                        </button>
+                      </div>
+
                       <button
                         type="button"
                         className="btn-accent"

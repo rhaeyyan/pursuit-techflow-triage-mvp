@@ -679,6 +679,8 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                               color: 'var(--text-primary)',
                               lineHeight: 1.65,
                               whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word',
                             }}
                           >
                             <span
@@ -759,6 +761,8 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                               <div
                                 style={{
                                   whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word',
                                   fontSize: '0.85rem',
                                   color: 'var(--text-primary)',
                                   backgroundColor: 'var(--bg-input)',

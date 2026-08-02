@@ -131,10 +131,20 @@ export const UploadCard: React.FC<UploadCardProps> = ({
       </div>
 
       <div
+        role="button"
+        tabIndex={isUploading ? -1 : 0}
+        aria-label="Upload CSV ticket file"
+        aria-disabled={isUploading}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (!isUploading && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
         style={{
           border: isDragOver
             ? '2px dashed var(--accent-primary)'

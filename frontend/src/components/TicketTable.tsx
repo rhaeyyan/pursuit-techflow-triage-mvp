@@ -229,7 +229,21 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
               return (
                 <React.Fragment key={ticket.ticket_id}>
                   <tr
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    aria-label={`Ticket ${ticket.ticket_id}: ${ticket.subject}`}
                     onClick={() => toggleExpand(ticket.ticket_id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        // Prevent toggling if user presses space/enter while focused on an inline select or input
+                        const targetTag = (e.target as HTMLElement).tagName.toLowerCase();
+                        if (targetTag !== 'select' && targetTag !== 'input' && targetTag !== 'button') {
+                          e.preventDefault();
+                          toggleExpand(ticket.ticket_id);
+                        }
+                      }
+                    }}
                     style={{
                       borderBottom: isExpanded ? 'none' : '1px solid var(--border-subtle)',
                       backgroundColor: isExpanded

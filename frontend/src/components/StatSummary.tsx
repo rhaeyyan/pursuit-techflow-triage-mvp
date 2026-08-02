@@ -98,7 +98,17 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
           <div
             key={card.id}
             className="card"
+            role={onSelectUrgencyFilter ? 'button' : undefined}
+            tabIndex={onSelectUrgencyFilter ? 0 : undefined}
+            aria-pressed={onSelectUrgencyFilter ? isSelected : undefined}
+            aria-label={onSelectUrgencyFilter ? `Filter by ${card.label}: ${card.count} tickets` : undefined}
             onClick={() => onSelectUrgencyFilter && onSelectUrgencyFilter(card.id)}
+            onKeyDown={(e) => {
+              if (onSelectUrgencyFilter && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                onSelectUrgencyFilter(card.id);
+              }
+            }}
             style={{
               padding: '16px 18px',
               cursor: onSelectUrgencyFilter ? 'pointer' : 'default',

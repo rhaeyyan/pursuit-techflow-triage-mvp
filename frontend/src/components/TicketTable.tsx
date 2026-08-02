@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { TriagedTicket, DensityMode } from '../types';
-import { ChevronDown, ChevronUp, Copy, Check, Sparkles, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock, Rows, AlignJustify } from 'lucide-react';
+import { ChevronDown, ChevronUp, Copy, Check, Sparkles, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock, Rows, AlignJustify, PanelRight } from 'lucide-react';
 import { useTicketEdits } from '../hooks/useTicketEdits';
 import { generateTicketResponse } from '../lib/ticketsApi';
 import { buildFallbackResponseTemplate } from '../lib/fallbackResponseTemplate';
+import { TicketDetailDrawer } from './TicketDetailDrawer';
 import {
   renderScoreBadge,
   renderStatusBadge,
@@ -25,6 +26,7 @@ interface TicketTableProps {
 
 export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'standard', onToggleDensity, onResetFilters }) => {
   const [expandedTicketIds, setExpandedTicketIds] = useState<Set<string>>(new Set());
+  const [drawerTicket, setDrawerTicket] = useState<TriagedTicket | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Persistence & Edit state (pending vs. saved vs. server) lives in this hook.
@@ -409,15 +411,30 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                       )}
                     </td>
 
-                    {/* Expand */}
+                    {/* Expand & Drawer Action Controls */}
                     <td
                       style={{
-                        padding: '14px 16px',
+                        padding: cellPadding,
                         textAlign: 'center',
                         color: 'var(--text-muted)',
                       }}
                     >
-                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDrawerTicket(ticket);
+                          }}
+                          aria-label={`Open ticket ${ticket.ticket_id} in side drawer`}
+                          title="Open in side drawer"
+                          style={{ padding: '3px 5px', borderRadius: 'var(--radius-sm)' }}
+                        >
+                          <PanelRight size={14} />
+                        </button>
+                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </div>
                     </td>
                   </tr>
 
@@ -764,6 +781,48 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
           </tbody>
         </table>
       </div>
+
+      {/* Side-Flyout Ticket Detail Drawer */}
+      <TicketDetailDrawer
+        ticket={drawerTicket}
+        isOpen={Boolean(drawerTicket)}
+        onClose={() => setDrawerTicket(null)}
+        effectiveStatus={drawerTicket ? getEffectiveStatus(drawerTicket) : 'new'}
+        onStatusChange={(tId, status) => setPendingStatus(tId, status)}
+        effectiveAssignee={drawerTicket ? getEffectiveAssignee(drawerTicket) : null}
+        onAssigneeChange={(tId, assignee) => setPendingAssignee(tId, assignee)}
+        generatedResponse={drawerTicket ? generatedResponses[drawerTicket.ticket_id] : undefined}
+        isGeneratingResponse={drawerTicket ? generatingIds.has(drawerTicket.ticket_id) : false}
+        onGenerateResponse={async (tId) => {
+          if (!drawerTicket) return;
+          setGeneratingIds((prev) => new Set(prev).add(tId));
+          try {
+            const result = await generateTicketResponse({
+              ticket_id: tId,
+              subject: drawerTicket.subject,
+              body: drawerTicket.body,
+              issue_type: drawerTicket.issue_type,
+              urgency: drawerTicket.urgency,
+            });
+            setGeneratedResponses((prev) => ({
+              ...prev,
+              [tId]: { text: result.text, source: result.source },
+            }));
+          } catch (err) {
+            const fallbackText = buildFallbackResponseTemplate(drawerTicket.ticket_id, drawerTicket.issue_type, drawerTicket.urgency);
+            setGeneratedResponses((prev) => ({
+              ...prev,
+              [tId]: { text: fallbackText, source: 'offline-fallback' },
+            }));
+          } finally {
+            setGeneratingIds((prev) => {
+              const next = new Set(prev);
+              next.delete(tId);
+              return next;
+            });
+          }
+        }}
+      />
     </div>
   );
 };

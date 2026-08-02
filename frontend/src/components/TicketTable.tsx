@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { TriagedTicket, DensityMode } from '../types';
-import { ChevronDown, ChevronUp, Copy, Check, Sparkles, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock, Rows, AlignJustify, PanelRight } from 'lucide-react';
+import { TriagedTicket, DensityMode, UrgencyLevel } from '../types';
+import { ChevronDown, ChevronUp, Copy, Check, Sparkles, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock, Rows, AlignJustify, PanelRight, Download } from 'lucide-react';
 import { useTicketEdits } from '../hooks/useTicketEdits';
 import { generateTicketResponse } from '../lib/ticketsApi';
 import { buildFallbackResponseTemplate } from '../lib/fallbackResponseTemplate';
@@ -28,6 +28,8 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
   const [expandedTicketIds, setExpandedTicketIds] = useState<Set<string>>(new Set());
   const [drawerTicket, setDrawerTicket] = useState<TriagedTicket | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [urgencyOverrides, setUrgencyOverrides] = useState<Record<string, { urgency: UrgencyLevel; urgency_score: number }>>({});
 
   // Persistence & Edit state (pending vs. saved vs. server) lives in this hook.
   const {
@@ -49,6 +51,136 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
   const [generatedResponses, setGeneratedResponses] = useState<Record<string, { text: string; source: string }>>({});
   const [generatingIds, setGeneratingIds] = useState<Set<string>>(new Set());
   const [copiedResponseId, setCopiedResponseId] = useState<string | null>(null);
+
+  const getEffectiveUrgency = (ticket: TriagedTicket): UrgencyLevel => {
+    return urgencyOverrides[ticket.ticket_id]?.urgency || (ticket.urgency as UrgencyLevel);
+  };
+
+  const getEffectiveUrgencyScore = (ticket: TriagedTicket): number => {
+    return urgencyOverrides[ticket.ticket_id]?.urgency_score ?? (ticket.urgency_score !== undefined ? ticket.urgency_score : 1);
+  };
+
+  const toggleSelect = (ticketId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(ticketId)) {
+        next.delete(ticketId);
+      } else {
+        next.add(ticketId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedTickets.length && sortedTickets.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedTickets.map((t) => t.ticket_id)));
+    }
+  };
+
+  const handleBulkUrgencyUpdate = (newUrgency: UrgencyLevel) => {
+    const scoreMap: Record<UrgencyLevel, number> = {
+      critical: 4,
+      high: 3,
+      medium: 2,
+      low: 1,
+    };
+    const newScore = scoreMap[newUrgency];
+    setUrgencyOverrides((prev) => {
+      const next = { ...prev };
+      selectedIds.forEach((id) => {
+        next[id] = { urgency: newUrgency, urgency_score: newScore };
+      });
+      return next;
+    });
+  };
+
+  const handleBulkExport = () => {
+    const selectedTickets = tickets.filter((t) => selectedIds.has(t.ticket_id));
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(selectedTickets, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `selected_tickets_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const renderSlaBadge = (ticket: TriagedTicket) => {
+    if (!ticket.created_at) return null;
+    const createdMs = new Date(ticket.created_at).getTime();
+    const diffMinutes = (Date.now() - createdMs) / (1000 * 60);
+
+    if (diffMinutes < 30) {
+      return (
+        <span
+          data-testid={`sla-badge-${ticket.ticket_id}`}
+          className="badge animate-pulse"
+          style={{
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            padding: '2px 6px',
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            color: '#ef4444',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: 'var(--radius-sm)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '3px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Clock size={10} /> &lt;30m SLA
+        </span>
+      );
+    } else if (diffMinutes <= 120) {
+      return (
+        <span
+          data-testid={`sla-badge-${ticket.ticket_id}`}
+          className="badge"
+          style={{
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            padding: '2px 6px',
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            color: '#f59e0b',
+            border: '1px solid rgba(245, 158, 11, 0.4)',
+            borderRadius: 'var(--radius-sm)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '3px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Clock size={10} /> 30m-2h SLA
+        </span>
+      );
+    } else {
+      return (
+        <span
+          data-testid={`sla-badge-${ticket.ticket_id}`}
+          className="badge"
+          style={{
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            padding: '2px 6px',
+            backgroundColor: 'var(--bg-input)',
+            color: 'var(--text-secondary)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '3px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Clock size={10} /> &gt;2h SLA
+        </span>
+      );
+    }
+  };
 
   const toggleExpand = (ticketId: string) => {
     setExpandedTicketIds((prev) => {
@@ -219,6 +351,16 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                 letterSpacing: '0.06em',
               }}
             >
+              <th style={{ padding: cellPadding, width: '40px', textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  data-testid="select-all-checkbox"
+                  checked={selectedIds.size === sortedTickets.length && sortedTickets.length > 0}
+                  onChange={toggleSelectAll}
+                  aria-label="Select all tickets"
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th
                 style={{ padding: cellPadding, width: '56px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('rank')}
@@ -295,6 +437,23 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                       transition: 'background-color 0.15s ease',
                     }}
                   >
+                    {/* Multi-select checkbox */}
+                    <td
+                      style={{ padding: cellPadding, width: '40px', textAlign: 'center' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        data-testid={`select-ticket-${ticket.ticket_id}`}
+                        checked={selectedIds.has(ticket.ticket_id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleSelect(ticket.ticket_id);
+                        }}
+                        aria-label={`Select ticket ${ticket.ticket_id}`}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </td>
                     {/* Rank */}
                     <td
                       style={{
@@ -386,7 +545,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                       {renderConfidenceBadge(ticket.confidence_source, index < 2)}
                     </td>
 
-                    {/* Date & Last Updated */}
+                    {/* Date & Last Updated & SLA Badge */}
                     <td
                       style={{
                         padding: cellPadding,
@@ -394,23 +553,26 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                         color: 'var(--text-secondary)',
                       }}
                     >
-                      <div>{formatDate(ticket.created_at)}</div>
-                      {getEffectiveUpdatedAt(ticket) && (
-                        <div
-                          style={{
-                            fontSize: '0.675rem',
-                            color: 'var(--accent-primary)',
-                            fontWeight: 600,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '3px',
-                            marginTop: '2px',
-                          }}
-                          title={`Last modified: ${formatDate(getEffectiveUpdatedAt(ticket))}`}
-                        >
-                          <Clock size={10} /> {formatDate(getEffectiveUpdatedAt(ticket))}
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div>{formatDate(ticket.created_at)}</div>
+                        {renderSlaBadge(ticket)}
+                        {getEffectiveUpdatedAt(ticket) && (
+                          <div
+                            style={{
+                              fontSize: '0.675rem',
+                              color: 'var(--accent-primary)',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              marginTop: '2px',
+                            }}
+                            title={`Last modified: ${formatDate(getEffectiveUpdatedAt(ticket))}`}
+                          >
+                            <Clock size={10} /> {formatDate(getEffectiveUpdatedAt(ticket))}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* Expand & Drawer Action Controls */}
@@ -448,7 +610,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                         borderBottom: '1px solid var(--border-primary)',
                       }}
                     >
-                      <td colSpan={8} style={{ padding: '20px 24px' }}>
+                      <td colSpan={9} style={{ padding: '20px 24px' }}>
                         <div
                           style={{
                             display: 'flex',
@@ -509,12 +671,12 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                                 <span>
                                   Score:{' '}
                                   <strong style={{ color: 'var(--text-primary)' }}>
-                                    {ticket.score !== undefined ? ticket.score : ticket.urgency_score * 25} / 100
+                                    {ticket.score !== undefined ? ticket.score : getEffectiveUrgencyScore(ticket) * 25} / 100
                                   </strong>
                                 </span>
 
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  Tier: {renderUrgencyBadge(ticket.urgency, ticket.urgency_score)}
+                                  Tier: {renderUrgencyBadge(getEffectiveUrgency(ticket), getEffectiveUrgencyScore(ticket))}
                                 </span>
 
                                 <span>
@@ -829,6 +991,79 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
           }
         }}
       />
+
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div
+          className="fade-in"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-focus)',
+            borderRadius: 'var(--radius-md)',
+            padding: '10px 18px',
+            boxShadow: 'var(--shadow-lg)',
+            backdropFilter: 'blur(8px)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          <span
+            data-testid="bulk-selected-count"
+            style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}
+          >
+            {selectedIds.size} {selectedIds.size === 1 ? 'ticket' : 'tickets'} selected
+          </span>
+
+          <button
+            type="button"
+            data-testid="bulk-clear-btn"
+            className="btn-secondary"
+            onClick={() => setSelectedIds(new Set())}
+            style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+          >
+            Clear Selection
+          </button>
+
+          <div style={{ height: '18px', width: '1px', backgroundColor: 'var(--border-primary)' }} />
+
+          <select
+            data-testid="bulk-urgency-select"
+            className="btn-secondary"
+            style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+            value=""
+            onChange={(e) => {
+              const val = e.target.value as UrgencyLevel;
+              if (val) {
+                handleBulkUrgencyUpdate(val);
+              }
+            }}
+          >
+            <option value="" disabled>Bulk Update Urgency...</option>
+            <option value="critical">Set Critical Urgency</option>
+            <option value="high">Set High Urgency</option>
+            <option value="medium">Set Medium Urgency</option>
+            <option value="low">Set Low Urgency</option>
+          </select>
+
+          <button
+            type="button"
+            data-testid="bulk-export-btn"
+            className="btn-primary"
+            onClick={handleBulkExport}
+            style={{ padding: '4px 12px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Download size={13} />
+            Export Selected
+          </button>
+        </div>
+      )}
     </div>
   );
 };

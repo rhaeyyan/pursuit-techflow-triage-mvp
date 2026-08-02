@@ -37,12 +37,13 @@ export const renderStatusBadge = (
     <select
       className={`status-pill ${pillClass}`}
       value={st}
+      aria-label={`Update status for ticket ${tId}`}
       onChange={(e) => {
         e.stopPropagation();
         onStatusChange(tId, e.target.value as TicketStatus);
       }}
       onClick={(e) => e.stopPropagation()}
-      style={{ cursor: 'pointer', outline: 'none' }}
+      style={{ cursor: 'pointer' }}
     >
       <option value="new">New</option>
       <option value="in-progress">In Progress</option>

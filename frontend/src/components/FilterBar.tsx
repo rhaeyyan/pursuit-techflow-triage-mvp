@@ -104,6 +104,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             value={filters.searchQuery}
             onChange={handleSearchChange}
             placeholder="Search tickets by subject, body, or ID…"
+            aria-label="Search tickets by subject, body, or ID"
             style={{
               width: '100%',
               padding: '9px 36px 9px 40px',
@@ -112,12 +113,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               borderRadius: 'var(--radius-md)',
               color: 'var(--text-primary)',
               fontSize: '0.875rem',
-              outline: 'none',
               transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = 'var(--border-focus)';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.15)';
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = 'var(--border-primary)';
@@ -128,6 +128,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <button
               type="button"
               onClick={() => onFilterChange({ ...filters, searchQuery: '' })}
+              aria-label="Clear search text"
               style={{
                 position: 'absolute',
                 right: '10px',
@@ -152,6 +153,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <select
             value={filters.categoryFilter}
             onChange={handleCategoryChange}
+            aria-label="Filter queue by issue category"
             style={{
               flex: 1,
               padding: '9px 12px',
@@ -160,7 +162,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               borderRadius: 'var(--radius-md)',
               color: 'var(--text-primary)',
               fontSize: '0.875rem',
-              outline: 'none',
               cursor: 'pointer',
             }}
           >

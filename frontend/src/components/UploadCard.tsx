@@ -35,10 +35,16 @@ export const UploadCard: React.FC<UploadCardProps> = ({
     setIsDragOver(false);
   };
 
+  const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB limit
+
   const validateAndProcessFile = (file: File) => {
     setErrorMsg(null);
     if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
       setErrorMsg('Invalid file format. Please upload a valid CSV file.');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setErrorMsg(`File size exceeds 5MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please upload a smaller file.`);
       return;
     }
     onFileUpload(file);

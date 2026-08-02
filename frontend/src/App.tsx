@@ -6,7 +6,7 @@ import { StatSummary } from './components/StatSummary';
 import { FilterBar } from './components/FilterBar';
 import { TicketTable } from './components/TicketTable';
 import { TrendBanner } from './components/TrendBanner';
-import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck, Sun, Moon, Github, Globe, Linkedin } from 'lucide-react';
+import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck, Sun, Moon, Github, Globe, Linkedin, Keyboard, X } from 'lucide-react';
 import { API_BASE_URL } from './lib/ticketsApi';
 
 function getInitialTheme(): 'light' | 'dark' {
@@ -18,6 +18,7 @@ function getInitialTheme(): 'light' | 'dark' {
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
   const [density, setDensity] = useState<DensityMode>('standard');
+  const [isShortcutModalOpen, setIsShortcutModalOpen] = useState<boolean>(false);
   const [tickets, setTickets] = useState<TriagedTicket[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -30,6 +31,32 @@ export const App: React.FC = () => {
     categoryFilter: 'all',
     searchQuery: '',
   });
+
+  // Global hotkeys listener (/ to search, ? for shortcuts, Esc to close/reset)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInputElement =
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.tagName === 'SELECT');
+
+      if (e.key === '/' && !isInputElement) {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+        if (searchInput) searchInput.focus();
+      } else if (e.key === '?' && !isInputElement) {
+        e.preventDefault();
+        setIsShortcutModalOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        setIsShortcutModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Health check backend status on mount
   useEffect(() => {
@@ -191,6 +218,17 @@ export const App: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Keyboard Shortcuts Trigger */}
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={() => setIsShortcutModalOpen(true)}
+            aria-label="Keyboard Shortcuts (Press ?)"
+            title="Keyboard Shortcuts (Press ?)"
+          >
+            <Keyboard size={18} />
+          </button>
+
           {/* Theme Toggle */}
           <button
             type="button"
@@ -437,6 +475,77 @@ export const App: React.FC = () => {
           </a>
         </div>
       </footer>
+
+      {/* Keyboard Shortcuts Modal */}
+      {isShortcutModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Keyboard Shortcuts"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={() => setIsShortcutModalOpen(false)}
+        >
+          <div
+            className="card fade-in"
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-primary)',
+              boxShadow: 'var(--shadow-lg)',
+              padding: '24px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Keyboard size={20} style={{ color: 'var(--accent-primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Keyboard Shortcuts
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ padding: '4px', borderRadius: 'var(--radius-sm)' }}
+                onClick={() => setIsShortcutModalOpen(false)}
+                aria-label="Close keyboard shortcuts modal"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Focus Search Input</span>
+                <kbd className="badge" style={{ fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px' }}>/</kbd>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Toggle Shortcuts Dialog</span>
+                <kbd className="badge" style={{ fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px' }}>?</kbd>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Close Dialog / Reset Focus</span>
+                <kbd className="badge" style={{ fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px' }}>Esc</kbd>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Expand / Collapse Ticket Row</span>
+                <kbd className="badge" style={{ fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px' }}>Enter / Space</kbd>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

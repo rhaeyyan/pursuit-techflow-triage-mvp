@@ -439,7 +439,13 @@ export const TicketDetailDrawer: React.FC<TicketDetailDrawerProps> = ({
                       id="ai-tone-select"
                       data-testid="ai-tone-select"
                       value={selectedTone}
-                      onChange={(e) => setSelectedTone(e.target.value)}
+                      onChange={(e) => {
+                        const newTone = e.target.value;
+                        setSelectedTone(newTone);
+                        if (generatedResponse) {
+                          onGenerateResponse(ticket.ticket_id, newTone);
+                        }
+                      }}
                       aria-label="Select AI response tone"
                       style={{
                         padding: '4px 8px',

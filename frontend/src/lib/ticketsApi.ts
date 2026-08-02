@@ -42,6 +42,7 @@ export interface GenerateResponsePayload {
   body: string;
   issue_type: string;
   urgency: string;
+  tone?: string;
 }
 
 export interface GenerateResponseResult {

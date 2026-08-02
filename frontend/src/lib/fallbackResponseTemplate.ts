@@ -11,7 +11,8 @@
 export function buildFallbackResponseTemplate(
   subject: string,
   issueType: string,
-  urgency: string
+  urgency: string,
+  tone: string = 'formal'
 ): string {
   const categoryNorm = issueType.toLowerCase();
   const urgencyNorm = urgency.toLowerCase();
@@ -29,6 +30,20 @@ export function buildFallbackResponseTemplate(
     bodyReply = `We have received your account security inquiry regarding '${subject}'. To safeguard your account integrity, our security desk is verifying session logs and access controls. If you are unable to access your portal, please ensure your multi-factor authentication device is active.`;
   } else if (categoryNorm.includes('feature')) {
     bodyReply = `Thank you for sharing your feature suggestion regarding '${subject}'! We love hearing feedback from our community. Your request has been logged with our Product Management team for evaluation during upcoming roadmap planning cycles.`;
+  }
+
+  const toneNorm = tone.toLowerCase();
+
+  if (toneNorm === 'empathic') {
+    return `Hello,\n\nWe understand your frustration and deeply apologize for any inconvenience regarding '${subject}'. Thank you for your patience while we resolve this issue.\n\n${bodyReply}\n\nPlease let us know if you have any additional details to add in the meantime.\n\nBest regards,\nTechFlow Support Team`;
+  }
+
+  if (toneNorm === 'concise') {
+    return `Quick Update / Status: Ticket '${subject}' logged.\n\nSummary:\n${bodyReply}\n\nAction: Assigned to specialist team for immediate review.`;
+  }
+
+  if (toneNorm === 'technical') {
+    return `Hello,\n\nTechnical Diagnostic Report for '${subject}':\n\n${bodyReply}\n\nSystem Metrics & Stack Trace Analysis: System telemetry and endpoint logs are being processed to isolate the root cause.\n\nBest regards,\nTechFlow Support Team`;
   }
 
   return `Hello,\n\nThank you for reaching out to TechFlow Support.\n\n${bodyReply}\n\nPlease let us know if you have any additional details to add in the meantime.\n\nBest regards,\nTechFlow Support Team`;

@@ -961,7 +961,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
         onAssigneeChange={(tId, assignee) => setPendingAssignee(tId, assignee)}
         generatedResponse={drawerTicket ? generatedResponses[drawerTicket.ticket_id] : undefined}
         isGeneratingResponse={drawerTicket ? generatingIds.has(drawerTicket.ticket_id) : false}
-        onGenerateResponse={async (tId) => {
+        onGenerateResponse={async (tId, tone) => {
           if (!drawerTicket) return;
           setGeneratingIds((prev) => new Set(prev).add(tId));
           try {
@@ -971,13 +971,14 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
               body: drawerTicket.body,
               issue_type: drawerTicket.issue_type,
               urgency: drawerTicket.urgency,
+              tone,
             });
             setGeneratedResponses((prev) => ({
               ...prev,
               [tId]: { text: result.text, source: result.source },
             }));
           } catch (err) {
-            const fallbackText = buildFallbackResponseTemplate(drawerTicket.ticket_id, drawerTicket.issue_type, drawerTicket.urgency);
+            const fallbackText = buildFallbackResponseTemplate(drawerTicket.subject, drawerTicket.issue_type, drawerTicket.urgency, tone);
             setGeneratedResponses((prev) => ({
               ...prev,
               [tId]: { text: fallbackText, source: 'offline-fallback' },

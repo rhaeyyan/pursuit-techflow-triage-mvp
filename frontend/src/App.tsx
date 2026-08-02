@@ -6,7 +6,7 @@ import { StatSummary } from './components/StatSummary';
 import { FilterBar } from './components/FilterBar';
 import { TicketTable } from './components/TicketTable';
 import { TrendBanner } from './components/TrendBanner';
-import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck, Sun, Moon, Github, Globe, Linkedin, Keyboard, X } from 'lucide-react';
+import { Zap, AlertTriangle, RefreshCw, CheckCircle2, ShieldCheck, Sun, Moon, Github, Globe, Linkedin, Keyboard, X, Search, RotateCcw } from 'lucide-react';
 import { API_BASE_URL } from './lib/ticketsApi';
 
 function getInitialTheme(): 'light' | 'dark' {
@@ -19,6 +19,8 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
   const [density, setDensity] = useState<DensityMode>('standard');
   const [isShortcutModalOpen, setIsShortcutModalOpen] = useState<boolean>(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+  const [commandPaletteQuery, setCommandPaletteQuery] = useState<string>('');
   const [tickets, setTickets] = useState<TriagedTicket[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export const App: React.FC = () => {
     searchQuery: '',
   });
 
-  // Global hotkeys listener (/ to search, ? for shortcuts, Esc to close/reset)
+  // Global hotkeys listener (Cmd+K/Ctrl+K for palette, / to search, ? for shortcuts, Esc to close)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
@@ -42,6 +44,20 @@ export const App: React.FC = () => {
           activeElement.tagName === 'TEXTAREA' ||
           activeElement.tagName === 'SELECT');
 
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        setCommandPaletteQuery('');
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        setIsShortcutModalOpen(false);
+        setIsCommandPaletteOpen(false);
+        setCommandPaletteQuery('');
+        return;
+      }
+
       if (e.key === '/' && !isInputElement) {
         e.preventDefault();
         const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
@@ -49,8 +65,6 @@ export const App: React.FC = () => {
       } else if (e.key === '?' && !isInputElement) {
         e.preventDefault();
         setIsShortcutModalOpen((prev) => !prev);
-      } else if (e.key === 'Escape') {
-        setIsShortcutModalOpen(false);
       }
     };
 
@@ -166,6 +180,53 @@ export const App: React.FC = () => {
 
   const hasTickets = tickets.length > 0;
 
+  const paletteActions = [
+    {
+      id: 'filter-critical',
+      label: 'Filter Critical Tickets',
+      category: 'Queue Action',
+      icon: <AlertTriangle size={18} style={{ color: 'var(--critical-color)' }} />,
+      handler: () => {
+        setFilters((prev) => ({ ...prev, urgencyFilter: 'critical' }));
+      },
+    },
+    {
+      id: 'reset-filters',
+      label: 'Reset All Queue Filters',
+      category: 'Queue Action',
+      icon: <RotateCcw size={18} />,
+      handler: () => {
+        setFilters({
+          urgencyFilter: 'all',
+          categoryFilter: 'all',
+          searchQuery: '',
+        });
+      },
+    },
+    {
+      id: 'toggle-theme',
+      label: 'Toggle Dark / Light Theme',
+      category: 'Appearance',
+      icon: theme === 'light' ? <Moon size={18} /> : <Sun size={18} />,
+      handler: () => {
+        toggleTheme();
+      },
+    },
+    {
+      id: 'load-demo',
+      label: 'Load 250 Demo Tickets',
+      category: 'Data Action',
+      icon: <Zap size={18} style={{ color: 'var(--accent-primary)' }} />,
+      handler: () => {
+        handleLoadDemo();
+      },
+    },
+  ];
+
+  const filteredPaletteActions = paletteActions.filter((action) =>
+    action.label.toLowerCase().includes(commandPaletteQuery.toLowerCase().trim())
+  );
+
   return (
     <div className="app-container">
       {/* Header Bar */}
@@ -218,6 +279,20 @@ export const App: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Command Palette Trigger */}
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={() => {
+              setIsCommandPaletteOpen(true);
+              setCommandPaletteQuery('');
+            }}
+            aria-label="Command Palette (Cmd+K / Ctrl+K)"
+            title="Command Palette (Cmd+K / Ctrl+K)"
+          >
+            <Search size={18} />
+          </button>
+
           {/* Keyboard Shortcuts Trigger */}
           <button
             type="button"
@@ -527,6 +602,10 @@ export const App: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Toggle Command Palette</span>
+                <kbd className="badge" style={{ fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px' }}>Cmd+K / Ctrl+K</kbd>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Focus Search Input</span>
                 <kbd className="badge" style={{ fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px' }}>/</kbd>
               </div>
@@ -542,6 +621,159 @@ export const App: React.FC = () => {
                 <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Expand / Collapse Ticket Row</span>
                 <kbd className="badge" style={{ fontFamily: 'monospace', fontWeight: 700, padding: '3px 8px' }}>Enter / Space</kbd>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Command Palette Modal Overlay */}
+      {isCommandPaletteOpen && (
+        <div
+          data-testid="command-palette-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command Palette"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: '80px 16px 16px 16px',
+          }}
+          onClick={() => {
+            setIsCommandPaletteOpen(false);
+            setCommandPaletteQuery('');
+          }}
+        >
+          <div
+            className="card fade-in"
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Search Input Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px 20px',
+                borderBottom: '1px solid var(--border-primary)',
+                backgroundColor: 'var(--bg-card)',
+              }}
+            >
+              <Search size={20} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+              <input
+                data-testid="command-palette-input"
+                type="text"
+                placeholder="Type a command or search..."
+                value={commandPaletteQuery}
+                onChange={(e) => setCommandPaletteQuery(e.target.value)}
+                autoFocus
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '1rem',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                }}
+              />
+              <kbd
+                className="badge"
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border-primary)',
+                  background: 'var(--bg-input)',
+                }}
+              >
+                ESC
+              </kbd>
+            </div>
+
+            {/* Quick Actions List */}
+            <div
+              data-testid="command-palette-actions"
+              style={{
+                padding: '8px',
+                maxHeight: '340px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+              }}
+            >
+              {filteredPaletteActions.length > 0 ? (
+                filteredPaletteActions.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={() => {
+                      action.handler();
+                      setIsCommandPaletteOpen(false);
+                      setCommandPaletteQuery('');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: 'var(--radius-md)',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: 500,
+                      textAlign: 'left',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-card-hover)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {action.icon}
+                      <span>{action.label}</span>
+                    </div>
+                    <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                      {action.category}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div
+                  style={{
+                    padding: '24px 16px',
+                    textAlign: 'center',
+                    color: 'var(--text-muted)',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  No matching commands found
+                </div>
+              )}
             </div>
           </div>
         </div>

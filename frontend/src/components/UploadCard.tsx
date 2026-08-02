@@ -103,6 +103,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
           <button
             type="button"
             className="btn-accent"
+            data-testid="load-demo-btn"
             onClick={onLoadDemo}
             disabled={isUploading}
             title="Load benchmark Kaggle support tickets dataset"
@@ -114,6 +115,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
           <button
             type="button"
             className="btn-secondary"
+            data-testid="download-sample-btn"
             onClick={downloadSampleCSV}
             title="Download example CSV schema format"
           >
@@ -125,6 +127,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
             <button
               type="button"
               className="btn-secondary"
+              data-testid="clear-queue-btn"
               onClick={onClearQueue}
               style={{ color: 'var(--critical-color)', borderColor: 'var(--critical-border)' }}
               title="Clear loaded tickets and return to empty upload state"
@@ -138,6 +141,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({
 
       <div
         role="button"
+        data-testid="upload-dropzone"
         tabIndex={isUploading ? -1 : 0}
         aria-label="Upload CSV ticket file"
         aria-disabled={isUploading}

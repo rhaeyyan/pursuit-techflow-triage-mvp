@@ -186,6 +186,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
           <button
             type="button"
             className="btn-secondary"
+            data-testid="density-toggle-btn"
             onClick={onToggleDensity}
             aria-label={`Switch table density to ${density === 'standard' ? 'compact' : 'standard'} mode`}
             title={`Switch to ${density === 'standard' ? 'compact' : 'standard'} density`}
@@ -268,6 +269,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'st
                 <React.Fragment key={ticket.ticket_id}>
                   <tr
                     role="button"
+                    data-testid={`ticket-row-${ticket.ticket_id}`}
                     tabIndex={0}
                     aria-expanded={isExpanded}
                     aria-label={`Ticket ${ticket.ticket_id}: ${ticket.subject}`}

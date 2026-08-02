@@ -98,6 +98,7 @@ export const StatSummary: React.FC<StatSummaryProps> = ({
           <div
             key={card.id}
             className="card"
+            data-testid={`stat-card-${card.id}`}
             role={onSelectUrgencyFilter ? 'button' : undefined}
             tabIndex={onSelectUrgencyFilter ? 0 : undefined}
             aria-pressed={onSelectUrgencyFilter ? isSelected : undefined}

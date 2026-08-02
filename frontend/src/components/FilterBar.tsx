@@ -105,6 +105,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             onChange={handleSearchChange}
             placeholder="Search tickets by subject, body, or ID…"
             aria-label="Search tickets by subject, body, or ID"
+            data-testid="search-input"
             style={{
               width: '100%',
               padding: '9px 36px 9px 40px',
@@ -129,6 +130,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               type="button"
               onClick={() => onFilterChange({ ...filters, searchQuery: '' })}
               aria-label="Clear search text"
+              data-testid="clear-search-btn"
               style={{
                 position: 'absolute',
                 right: '10px',
@@ -154,6 +156,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             value={filters.categoryFilter}
             onChange={handleCategoryChange}
             aria-label="Filter queue by issue category"
+            data-testid="category-select"
             style={{
               flex: 1,
               padding: '9px 12px',
@@ -177,6 +180,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <button
             type="button"
             className="btn-secondary"
+            data-testid="reset-filters-btn"
             onClick={handleReset}
             style={{ padding: '7px 14px', fontSize: '0.8rem' }}
           >

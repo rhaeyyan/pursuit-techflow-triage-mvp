@@ -1,11 +1,13 @@
 """FastAPI application for TechFlow Support Queue backend."""
 
 from collections import Counter
+from datetime import datetime, timezone
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from schemas import TriageResponse, GenerateResponseRequest, GenerateResponseOutput, UpdateTicketRequest, TriagedTicket
 from services.triage import parse_csv_tickets, triage_tickets, generate_ticket_response
+from services.trends import detect_emerging_topics
 
 app = FastAPI(title="TechFlow Support Queue API")
 
@@ -64,6 +66,7 @@ def generate_response_endpoint(request: GenerateResponseRequest):
             body=request.body,
             issue_type=request.issue_type,
             urgency=request.urgency,
+            tone=request.tone,
         )
         return GenerateResponseOutput(
             ticket_id=request.ticket_id,
@@ -72,12 +75,6 @@ def generate_response_endpoint(request: GenerateResponseRequest):
         )
     except Exception as err:
         raise HTTPException(status_code=500, detail=f"Failed to generate response: {err}")
-
-
-from services.trends import detect_emerging_topics
-
-
-from datetime import datetime, timezone
 
 
 @app.patch("/api/tickets/{ticket_id}")

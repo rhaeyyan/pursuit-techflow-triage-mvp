@@ -52,6 +52,8 @@ class GenerateResponseRequest(BaseModel):
     body: str
     issue_type: str = "general"
     urgency: str = "medium"
+    tone: str = "formal"
+
 
 
 class GenerateResponseOutput(BaseModel):

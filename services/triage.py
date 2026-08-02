@@ -607,6 +607,7 @@ def generate_ticket_response(
     body: str,
     issue_type: str = "general",
     urgency: str = "medium",
+    tone: str = "formal",
 ) -> tuple[str, str]:
     """Generates an AI or template-driven suggested response for a support ticket.
     Returns (suggested_response_text, source_string).
@@ -625,10 +626,11 @@ def generate_ticket_response(
                 f"Ticket ID: {ticket_id}\n"
                 f"Issue Category: {issue_type}\n"
                 f"Urgency Level: {urgency}\n"
+                f"Tone: {tone}\n"
                 f"Subject: {subject}\n"
                 f"Body: {body}\n\n"
                 "Requirements:\n"
-                "- Write a direct, empathetic, and professional response.\n"
+                f"- Write a response using a {tone} tone.\n"
                 "- Include appropriate next steps based on the issue category.\n"
                 "- Keep the response concise (2-4 paragraphs).\n"
                 "- Do not include placeholders like [Your Name] — sign off as 'TechFlow Support Team'."
@@ -660,10 +662,11 @@ def generate_ticket_response(
             endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
             prompt = (
                 "You are an expert customer support specialist for TechFlow SaaS. "
-                "Draft a polite, professional, and helpful customer email response for this ticket.\n"
+                f"Draft a customer email response for this ticket using a {tone} tone.\n"
                 f"Ticket ID: {ticket_id}\n"
                 f"Issue Category: {issue_type}\n"
                 f"Urgency Level: {urgency}\n"
+                f"Tone: {tone}\n"
                 f"Subject: {subject}\n"
                 f"Body: {body}\n\n"
                 "Sign off as 'TechFlow Support Team'."
@@ -685,48 +688,129 @@ def generate_ticket_response(
     # 3. Deterministic Smart Template Fallback
     category_norm = issue_type.lower()
     urgency_norm = urgency.lower()
+    tone_norm = tone.lower()
 
-    greeting = "Hello,\n\nThank you for reaching out to TechFlow Support."
-
-    if "billing" in category_norm:
-        if urgency_norm == "critical":
+    if tone_norm == "empathic":
+        greeting = "Hello,\n\nWe sincerely apologize for the inconvenience and understand how frustrating this issue can be."
+        if "billing" in category_norm:
             body_reply = (
-                f"We have flagged your ticket regarding '{subject}' as Critical Priority. "
-                "Our billing operations and finance team has been immediately notified to audit your transaction records. "
-                "Any erroneous billing charges or duplicate invoices will be reversed promptly within 1 business day."
+                f"We understand how concerning billing issues can be regarding '{subject}'. "
+                "We sincerely apologize for any confusion or delay, and our finance team is reviewing your invoice to ensure it is resolved immediately."
+            )
+        elif "technical" in category_norm:
+            body_reply = (
+                f"We deeply apologize for the technical difficulties you experienced with '{subject}'. "
+                "We understand how frustrating service disruptions are, and our engineering team is actively investigating to get everything working smoothly."
+            )
+        elif "account" in category_norm:
+            body_reply = (
+                f"We understand how frustrating account issues are, and we sincerely apologize for the difficulty accessing your portal for '{subject}'. "
+                "Our team is prioritizing your request to restore access safely."
+            )
+        elif "feature_request" in category_norm:
+            body_reply = (
+                f"We sincerely appreciate your feedback regarding '{subject}'. "
+                "We understand how valuable this feature would be for your team, and we have shared your suggestion directly with our product team."
             )
         else:
             body_reply = (
-                f"We have received your billing inquiry regarding '{subject}'. "
-                "Our accounting team is reviewing invoice details for your account and will confirm payment adjustments or credit status shortly."
+                f"We sincerely apologize for the inconvenience caused regarding '{subject}'. "
+                "We understand how frustrating this is, and we are dedicated to resolving this for you as quickly as possible."
             )
-    elif "technical" in category_norm:
-        if urgency_norm == "critical":
+        closing = "\n\nPlease reach out if you have any questions. We are here to help.\n\nBest regards,\nTechFlow Support Team"
+        return f"{greeting}\n\n{body_reply}\n{closing}", "template"
+
+    elif tone_norm == "concise":
+        lines = [
+            f"TechFlow Support - Ticket {ticket_id} ({subject}):",
+            "- Status: Issue received and being processed.",
+        ]
+        if "billing" in category_norm:
+            lines.append("- Action: Finance team auditing invoice details.")
+        elif "technical" in category_norm:
+            lines.append("- Action: Engineering investigating system logs.")
+        elif "account" in category_norm:
+            lines.append("- Action: Security desk verifying account status.")
+        else:
+            lines.append("- Action: Support team evaluating request details.")
+        lines.append("- Next Update: Within 24 hours.")
+        lines.append("\nTechFlow Support Team")
+        return "\n".join(lines), "template"
+
+    elif tone_norm == "technical":
+        greeting = f"Hello,\n\nTechFlow SRE and Engineering incident response update for ticket {ticket_id}."
+        if "billing" in category_norm:
             body_reply = (
-                f"We have escalated your report '{subject}' to our Senior Infrastructure & Site Reliability Engineering team as a Critical Incident. "
-                "Our engineers are actively investigating server logs and system metrics. We will provide real-time updates as we work toward resolution."
+                f"Diagnostic status for '{subject}': Telemetry logs and transaction metrics have been captured. "
+                "Engineering is reviewing payment gateway logs to verify ledger integrity."
+            )
+        elif "technical" in category_norm:
+            if urgency_norm == "critical":
+                body_reply = (
+                    f"Critical Incident status for '{subject}': SRE team dispatched. "
+                    "Diagnostic telemetry and system logs indicate service anomaly. High-priority engineering triage is active."
+                )
+            else:
+                body_reply = (
+                    f"Diagnostic status for '{subject}': SRE engineers are inspecting system logs and telemetry metrics. "
+                    "Diagnostic traces are under review to formulate a patch."
+                )
+        elif "account" in category_norm:
+            body_reply = (
+                f"Security telemetry status for '{subject}': Authentication logs and access control audit trails are under engineering analysis. "
+                "SRE team is reviewing session metrics."
             )
         else:
             body_reply = (
-                f"Our technical engineering team is investigating your report regarding '{subject}'. "
-                "We are testing steps to reproduce the issue and will share diagnostic findings or a patch update shortly."
+                f"Engineering status for '{subject}': Diagnostic telemetry has been logged. "
+                "SRE desk is analyzing system metrics and logs."
             )
-    elif "account" in category_norm:
-        body_reply = (
-            f"We have received your account security inquiry regarding '{subject}'. "
-            "To safeguard your account integrity, our security desk is verifying session logs and access controls. "
-            "If you are unable to access your portal, please ensure your multi-factor authentication device is active."
-        )
-    elif "feature_request" in category_norm:
-        body_reply = (
-            f"Thank you for sharing your feature suggestion regarding '{subject}'! "
-            "We love hearing feedback from our community. Your request has been logged with our Product Management team for evaluation during upcoming roadmap planning cycles."
-        )
+        closing = "\n\nDiagnostic telemetry status: IN_PROGRESS\nEngineering Desk\nTechFlow Support Team"
+        return f"{greeting}\n\n{body_reply}\n{closing}", "template"
+
     else:
-        body_reply = (
-            f"We have received your ticket regarding '{subject}' and assigned it to the appropriate specialist team. "
-            "We are currently reviewing your request details and will follow up with further information shortly."
-        )
+        # Default / formal tone
+        greeting = "Hello,\n\nThank you for reaching out to TechFlow Support."
 
-    closing = "\n\nPlease let us know if you have any additional details to add in the meantime.\n\nBest regards,\nTechFlow Support Team"
-    return f"{greeting}\n\n{body_reply}\n{closing}", "template"
+        if "billing" in category_norm:
+            if urgency_norm == "critical":
+                body_reply = (
+                    f"We have flagged your ticket regarding '{subject}' as Critical Priority. "
+                    "Our billing operations and finance team has been immediately notified to audit your transaction records. "
+                    "Any erroneous billing charges or duplicate invoices will be reversed promptly within 1 business day."
+                )
+            else:
+                body_reply = (
+                    f"We have received your billing inquiry regarding '{subject}'. "
+                    "Our accounting team is reviewing invoice details for your account and will confirm payment adjustments or credit status shortly."
+                )
+        elif "technical" in category_norm:
+            if urgency_norm == "critical":
+                body_reply = (
+                    f"We have escalated your report '{subject}' to our Senior Infrastructure & Site Reliability Engineering team as a Critical Incident. "
+                    "Our engineers are actively investigating server logs and system metrics. We will provide real-time updates as we work toward resolution."
+                )
+            else:
+                body_reply = (
+                    f"Our technical engineering team is investigating your report regarding '{subject}'. "
+                    "We are testing steps to reproduce the issue and will share diagnostic findings or a patch update shortly."
+                )
+        elif "account" in category_norm:
+            body_reply = (
+                f"We have received your account security inquiry regarding '{subject}'. "
+                "To safeguard your account integrity, our security desk is verifying session logs and access controls. "
+                "If you are unable to access your portal, please ensure your multi-factor authentication device is active."
+            )
+        elif "feature_request" in category_norm:
+            body_reply = (
+                f"Thank you for sharing your feature suggestion regarding '{subject}'! "
+                "We love hearing feedback from our community. Your request has been logged with our Product Management team for evaluation during upcoming roadmap planning cycles."
+            )
+        else:
+            body_reply = (
+                f"We have received your ticket regarding '{subject}' and assigned it to the appropriate specialist team. "
+                "We are currently reviewing your request details and will follow up with further information shortly."
+            )
+
+        closing = "\n\nPlease let us know if you have any additional details to add in the meantime.\n\nBest regards,\nTechFlow Support Team"
+        return f"{greeting}\n\n{body_reply}\n{closing}", "template"

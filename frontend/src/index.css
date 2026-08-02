@@ -27,7 +27,7 @@
   /* Text */
   --text-primary: #1c1917;
   --text-secondary: #57534e;
-  --text-muted: #8c857b;
+  --text-muted: #6b6357;
   --text-inverse: #ffffff;
 
   /* Accent Colors */
@@ -766,13 +766,19 @@ button:disabled {
   border-color: var(--critical-border);
 }
 
+*:focus-visible {
+  outline: 2px solid var(--accent-primary) !important;
+  outline-offset: 2px !important;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 4px 10px;
+  min-height: 28px;
   border-radius: var(--radius-pill);
-  font-size: 0.725rem;
+  font-size: 0.775rem;
   font-weight: 600;
   text-transform: capitalize;
 }

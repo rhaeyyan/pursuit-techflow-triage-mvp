@@ -6,6 +6,8 @@ export type ConfidenceSource = 'rule' | 'llm' | 'fallback';
 
 export type TicketStatus = 'new' | 'in-progress' | 'escalated' | 'resolved';
 
+export type DensityMode = 'standard' | 'compact';
+
 export interface TriagedTicket {
   ticket_id: string;
   subject: string;

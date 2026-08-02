@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { TriagedTicket } from '../types';
-import { ChevronDown, ChevronUp, Copy, Check, Sparkles, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock } from 'lucide-react';
+import { TriagedTicket, DensityMode } from '../types';
+import { ChevronDown, ChevronUp, Copy, Check, Sparkles, HelpCircle, ArrowUpDown, RefreshCw, Bot, Save, X, Clock, Rows, AlignJustify } from 'lucide-react';
 import { useTicketEdits } from '../hooks/useTicketEdits';
 import { generateTicketResponse } from '../lib/ticketsApi';
 import { buildFallbackResponseTemplate } from '../lib/fallbackResponseTemplate';
@@ -18,10 +18,12 @@ import {
 
 interface TicketTableProps {
   tickets: TriagedTicket[];
+  density?: DensityMode;
+  onToggleDensity?: () => void;
   onResetFilters?: () => void;
 }
 
-export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilters }) => {
+export const TicketTable: React.FC<TicketTableProps> = ({ tickets, density = 'standard', onToggleDensity, onResetFilters }) => {
   const [expandedTicketIds, setExpandedTicketIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -157,15 +159,49 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
     );
   }
 
+  const cellPadding = density === 'compact' ? '8px 10px' : '14px 16px';
+  const tableFontSize = density === 'compact' ? '0.8125rem' : '0.875rem';
+
   return (
     <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
+      {/* Table Bar Header */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 18px',
+          backgroundColor: 'var(--bg-table-header)',
+          borderBottom: '1px solid var(--border-primary)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+            Prioritized Queue ({sortedTickets.length})
+          </span>
+        </div>
+        {onToggleDensity && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onToggleDensity}
+            aria-label={`Switch table density to ${density === 'standard' ? 'compact' : 'standard'} mode`}
+            title={`Switch to ${density === 'standard' ? 'compact' : 'standard'} density`}
+            style={{ padding: '4px 10px', fontSize: '0.75rem', gap: '6px' }}
+          >
+            {density === 'compact' ? <AlignJustify size={14} /> : <Rows size={14} />}
+            {density === 'compact' ? 'Compact Mode' : 'Standard Mode'}
+          </button>
+        )}
+      </div>
+
       <div style={{ overflowX: 'auto' }}>
         <table
           style={{
             width: '100%',
             borderCollapse: 'collapse',
             textAlign: 'left',
-            fontSize: '0.875rem',
+            fontSize: tableFontSize,
           }}
         >
           <thead>
@@ -181,7 +217,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
               }}
             >
               <th
-                style={{ padding: '14px 16px', width: '56px', cursor: 'pointer', userSelect: 'none' }}
+                style={{ padding: cellPadding, width: '56px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('rank')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -189,7 +225,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                 </div>
               </th>
               <th
-                style={{ padding: '14px 16px', width: '70px', cursor: 'pointer', userSelect: 'none' }}
+                style={{ padding: cellPadding, width: '70px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('score')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -197,26 +233,26 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                 </div>
               </th>
               <th
-                style={{ padding: '14px 16px', width: '110px', cursor: 'pointer', userSelect: 'none' }}
+                style={{ padding: cellPadding, width: '110px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('id')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Ticket ID <ArrowUpDown size={11} style={{ opacity: sortField === 'id' ? 1 : 0.4 }} />
                 </div>
               </th>
-              <th style={{ padding: '14px 16px' }}>Subject & Triage Signals</th>
-              <th style={{ padding: '14px 16px', width: '120px' }}>Category</th>
-              <th style={{ padding: '14px 16px', width: '100px' }}>Status</th>
-              <th style={{ padding: '14px 16px', width: '125px' }}>Source</th>
+              <th style={{ padding: cellPadding }}>Subject & Triage Signals</th>
+              <th style={{ padding: cellPadding, width: '120px' }}>Category</th>
+              <th style={{ padding: cellPadding, width: '100px' }}>Status</th>
+              <th style={{ padding: cellPadding, width: '125px' }}>Source</th>
               <th
-                style={{ padding: '14px 16px', width: '125px', cursor: 'pointer', userSelect: 'none' }}
+                style={{ padding: cellPadding, width: '125px', cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => toggleSort('date')}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Created <ArrowUpDown size={11} style={{ opacity: sortField === 'date' ? 1 : 0.4 }} />
                 </div>
               </th>
-              <th style={{ padding: '14px 16px', width: '40px' }}></th>
+              <th style={{ padding: cellPadding, width: '40px' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -258,7 +294,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                     {/* Rank */}
                     <td
                       style={{
-                        padding: '14px 16px',
+                        padding: cellPadding,
                         fontWeight: 700,
                         color: 'var(--text-muted)',
                         fontSize: '0.825rem',
@@ -268,14 +304,14 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                     </td>
 
                     {/* Numerical Score */}
-                    <td style={{ padding: '14px 16px' }}>
+                    <td style={{ padding: cellPadding }}>
                       {renderScoreBadge(ticket.score)}
                     </td>
 
                     {/* Ticket ID */}
                     <td
                       style={{
-                        padding: '14px 16px',
+                        padding: cellPadding,
                         fontFamily: '"SF Mono", "Fira Code", "Fira Mono", Menlo, monospace',
                         fontWeight: 600,
                         fontSize: '0.825rem',
@@ -288,7 +324,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                     {/* Subject & Reason Tags */}
                     <td
                       style={{
-                        padding: '14px 16px',
+                        padding: cellPadding,
                         fontWeight: 500,
                         color: 'var(--text-primary)',
                         maxWidth: '360px',
@@ -325,7 +361,7 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                     </td>
 
                     {/* Category & Sub-Category */}
-                    <td style={{ padding: '14px 16px' }}>
+                    <td style={{ padding: cellPadding }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         <span className="badge badge-category">{formatIssueType(ticket.issue_type)}</span>
                         {formatSubCategory(ticket.sub_category) && (
@@ -337,19 +373,19 @@ export const TicketTable: React.FC<TicketTableProps> = ({ tickets, onResetFilter
                     </td>
 
                     {/* Status Pill */}
-                    <td style={{ padding: '14px 16px' }}>
+                    <td style={{ padding: cellPadding }}>
                       {renderStatusBadge(ticket, getEffectiveStatus(ticket), setPendingStatus)}
                     </td>
 
                     {/* Source with Tooltip */}
-                    <td style={{ padding: '14px 16px' }}>
+                    <td style={{ padding: cellPadding }}>
                       {renderConfidenceBadge(ticket.confidence_source, index < 2)}
                     </td>
 
                     {/* Date & Last Updated */}
                     <td
                       style={{
-                        padding: '14px 16px',
+                        padding: cellPadding,
                         fontSize: '0.8rem',
                         color: 'var(--text-secondary)',
                       }}

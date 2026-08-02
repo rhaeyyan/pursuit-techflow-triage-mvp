@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { TriagedTicket, FilterState, TriageResponse } from './types';
+import { TriagedTicket, FilterState, TriageResponse, DensityMode } from './types';
 import { DEMO_TICKETS } from './mockData';
 import { UploadCard } from './components/UploadCard';
 import { StatSummary } from './components/StatSummary';
@@ -17,6 +17,7 @@ function getInitialTheme(): 'light' | 'dark' {
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
+  const [density, setDensity] = useState<DensityMode>('standard');
   const [tickets, setTickets] = useState<TriagedTicket[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -340,6 +341,8 @@ export const App: React.FC = () => {
           {/* Prioritized Ticket Table */}
           <TicketTable
             tickets={filteredTickets}
+            density={density}
+            onToggleDensity={() => setDensity((prev) => (prev === 'standard' ? 'compact' : 'standard'))}
             onResetFilters={() =>
               setFilters({
                 urgencyFilter: 'all',

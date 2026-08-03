@@ -41,8 +41,10 @@ Given a batch of incoming support tickets (as a CSV upload), TechFlow Support Qu
    tickets at the top.
 4. **Categorizes everything** so the team can route tickets to the right person without reading
    each one first.
-5. **Drafts AI customer responses** -- enables specialists to generate, review, and copy AI-driven or template-backed email response drafts for any ticket with one click.
-6. **Assigns Workflow Status & Specialists** -- tracks ticket progress (`New`, `In Progress`, `Escalated`, `Resolved`) and lets team leads assign tickets to specialists (*Jordan M.*, *Sofia R.*, *Miguel T.*, *Aisha B.*).
+5. **Drafts & Edits AI Customer Responses** -- enables specialists to generate, edit, review, and send AI-driven or template-backed email response drafts with customizable tone controls (*Formal*, *Empathic*, *Concise*, *Technical*).
+6. **Assigns Workflow Status & Specialists** -- tracks ticket progress (`New`, `In Progress`, `Escalated`, `Resolved`) with a one-click "Respond" button and lets team leads assign tickets to specialists (*Jordan M.*, *Sofia R.*, *Miguel T.*, *Aisha B.*).
+7. **Enterprise Bento Grid & Telemetry** -- displays real-time SLA breach countdowns, urgency distribution progress bars, AI triage source split meters, and queue velocity.
+8. **Bulk Queue Operations & Command Palette** -- floating multi-select bulk action bar for mass urgency updates or exports, plus a global `Cmd+K` power-user command menu.
 
 ![Batch CSV Ingestion & Urgency Overview](screenshot/Dashboard.png)
 
@@ -200,18 +202,18 @@ Get a single ticket classified and displayed correctly before scaling to the ful
 
 ### Status
 
-**V1 Full-Stack MVP Complete & Verified.**
+**V1 Enterprise-Grade Full-Stack MVP Complete & Verified (84 Total Tests Passing).**
 
-- **Backend Core**: Flexible CSV parsing with header alias normalization, multi-factor $0–100$ priority scoring algorithm, channel risk weighting, explainable triage reason extraction, classification pipeline (deterministic rule engine + safe default fallback), AI customer response draft generator (`/api/tickets/generate-response`), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). 100% test coverage with 15/15 passing `pytest` suite.
-- **Frontend SPA**: Modern, corporate-friendly UI with:
-  - **Light/Dark Theme System**: Warm corporate cream palette for light mode alongside polished dark mode with smooth theme transitions and `localStorage` persistence.
-  - **Batch CSV Upload & Drag-and-Drop**: Supports arbitrary CSV uploads, custom header alias mapping, and one-click demo data loading.
-  - **Prioritized Triage Table**: Ranked ticket queue sorted by $0–100$ priority score, live search, issue category filtering, expandable ticket body previews, and column sorting.
-  - **Explainable Triage Badges**: Surfaces explicit reasoning tags (*Churn risk*, *Live phone*, *Legal escalation risk*, *Refund risk*, *Data loss*).
-  - **Workflow Management**: Interactive status badges (`New`, `In Progress`, `Escalated`, `Resolved`) and specialist assignment controls (*Jordan M.*, *Sofia R.*, *Miguel T.*, *Aisha B.*).
-  - **AI-Assisted Draft Responses**: On-demand AI draft response generation inside expanded ticket views with one-click copy functionality.
-  - **Interactive Tooltips**: Contextual tooltips explaining classification sources (*Rule Engine*, *LLM Classifier*, *Fallback*) and API connection status (*API Connected* / *Standalone Mode*).
-  - **Queue Management**: One-click queue reset to return to clean upload state.
+- **Backend Core**: Flexible CSV parsing with header alias normalization, multi-factor $0–100$ priority scoring algorithm, channel risk weighting, explainable triage reason extraction, classification pipeline (deterministic rule engine + safe default fallback), tone-aware AI customer response draft generator (`/api/tickets/generate-response`), and FastAPI REST API endpoints (`/api/tickets/triage`, `/health`). **100% test coverage with 30/30 passing `pytest` suite**.
+- **Frontend SPA**: Enterprise-grade UI/UX built with WCAG 2.2 AA design tokens featuring:
+  - **Slate/Zinc Dark & Ivory Light Themes**: Crisp contrast ratios, tabular monospaced numbers (`font-variant-numeric: tabular-nums`), and smooth `localStorage` theme persistence.
+  - **4-Card Bento Grid Header**: Real-time *SLA Telemetry*, *Urgency Ratio* progress bars, *AI Triage Breakdown* split meter, and *Queue Velocity*.
+  - **Multi-Select Bulk Operations**: Floating action bar for batch urgency updating, selection clearing, and JSON/CSV data export.
+  - **SLA Breach Countdown Badges**: Real-time row-level timers (`<30m` pulse red, `30m-2h` warning amber, `>2h` standard).
+  - **Multi-Tab Side Flyout Drawer**: Deep ticket inspection featuring *Overview & AI Draft*, *Customer Metadata* tier badges, and *Lifecycle Audit Trail*.
+  - **Tone-Aware Editable AI Drafts**: Interactive `<textarea>` draft editing with live tone switcher (*Formal*, *Empathic*, *Concise*, *Technical*) and one-click **"Respond"** action displaying a **"Message Sent"** toast alert & optimistic status resolution.
+  - **Global Command Palette (`Cmd+K`)**: Instant search and action menu overlay for fast keyboard power-user navigation.
+  - **Full Test Automation**: **54/54 passing Vitest unit test suite**.
 - **Demo Datasets**: One-click curated walkthrough (10 hand-authored demo tickets), a synthetic 250-ticket sample CSV (`data/sample_250_tickets.csv`) for volume testing, and the real Kaggle dataset (`data/customer_support_tickets.csv`, ~8,469 rows) for testing against authentic ticket text.
 
 ---
